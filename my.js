@@ -21,7 +21,7 @@ $(document).ready(function () {
         strategy = $('#strategy').val();
         shares = buyShares * 1000; // Convert to shares
 
-        buyFee = Math.max(Math.floor(buyPrice * 0.001425 * discount), 20);
+        buyFee = Math.max(Math.floor(buyPrice * 0.001425 * discount * buyShares), 20);
         buyCost = Math.floor(buyPrice * shares + buyFee);
 
         sellTaxRate = isDayTrading ? 0.0015 : 0.003;
@@ -57,7 +57,7 @@ $(document).ready(function () {
     }
 
     function calculateResult(sellPrice) {
-        const sellFee = Math.max(Math.floor(sellPrice * 0.001425 * discount), 20);
+        const sellFee = Math.max(Math.floor(sellPrice * 0.001425 * discount * buyShares), 20);
         const sellTax = Math.floor(sellPrice * shares * sellTaxRate);
         const sellIncome = Math.floor(sellPrice * shares - sellFee - sellTax);
         let profitLoss;
