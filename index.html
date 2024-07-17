@@ -29,8 +29,8 @@
 
     <!-- google ad -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3630139872305550"
-     crossorigin="anonymous"></script>
-    
+        crossorigin="anonymous"></script>
+
     <!-- Structured Data for Rich Snippets -->
     <script type="application/ld+json">
     {
@@ -45,10 +45,12 @@
     }
     </script>
 </head>
+<header class="header">
+    <h1 >股票當沖計算機(損益計算器)</h1>
+</header>
 
 <body>
     <div class="container mt-5">
-        <h1 class="h1 text-center">股票當沖計算機(損益計算器)</h1>
         <form id="stockForm" class="mt-4">
             <div class="form-row">
                 <div class="form-group col-md-3">
@@ -61,7 +63,8 @@
                 </div>
                 <div class="form-group col-md-3">
                     <label for="discount">券商提供的折扣數</label>
-                    <input type="number" class="form-control" id="discount" value="2.8" placeholder="輸入券商提供的折扣數" min="0" max="10" step="0.1" required>
+                    <input type="number" class="form-control" id="discount" value="2.8" placeholder="輸入券商提供的折扣數" min="0"
+                        max="10" step="0.1" required>
                 </div>
                 <div class="form-group col-md-3">
                     <label for="strategy">策略選擇</label>
@@ -77,7 +80,8 @@
             </div>
             <button type="submit" class="btn btn-primary">計算損益</button>
         </form>
-        <table class="table table-bordered table-responsive-sm results-table" id="resultsTable" style="text-align: center;">
+        <table class="table table-bordered table-responsive-sm results-table" id="resultsTable"
+            style="text-align: center;">
             <thead class="thead-custom">
                 <tr>
                     <th>賣出價格</th>
@@ -86,7 +90,8 @@
                     <th>總證交稅</th>
                 </tr>
                 <tr>
-                    <td class="more-results text-center p-2" style="background-color: #faf8f8; display: none;" colspan="4">
+                    <td class="more-results text-center p-2" style="background-color: #faf8f8; display: none;"
+                        colspan="4">
                         <button class="btn btn-success btn-sm" id="showMoreTop">顯示更多結果</button>
                     </td>
                 </tr>
@@ -94,17 +99,18 @@
             <tbody>
                 <!-- Results will be inserted here -->
                 <tr>
-                    <td class="more-results text-center p-2" style="background-color: #fcfbfb; display: none;" colspan="4">
+                    <td class="more-results text-center p-2" style="background-color: #fcfbfb; display: none;"
+                        colspan="4">
                         <button class="btn btn-success btn-sm" id="showMoreBottom">顯示更多結果</button>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <footer class="footer">
-        <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
-        <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
-    </footer>
 </body>
+<footer class="footer">
+    <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
+    <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
+</footer>
 
 </html>

@@ -9,10 +9,6 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-    color: #0c68c4;
-}
-
 .form-group label {
     font-weight: bold;
 }
@@ -49,6 +45,14 @@ h1 {
     .btn-secondary {
         width: auto;
     }
+}
+
+.header {
+    background-color: #343a40;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    position: relative;
 }
 
 .footer {
