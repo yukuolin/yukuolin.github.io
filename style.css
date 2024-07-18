@@ -1,5 +1,6 @@
 body {
     background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
 }
 
 .container {
@@ -7,6 +8,7 @@ body {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
 }
 
 h1 {
@@ -14,45 +16,22 @@ h1 {
     color: #fff;
     text-align: center;
     padding: 10px 0;
-    position: relative;
+    border-radius: 8px;
 }
 
-.form-group label {
-    font-weight: bold;
-}
-
-.results-table {
+h2 {
     margin-top: 20px;
+    color: #343a40;
 }
 
-.thead-custom {
-    background-color: #6c757d;
-    color: #fff;
+p {
+    line-height: 1.6;
 }
 
 .highlight {
     background-color: #dcdcdc;
-}
-
-.positive {
-    color: red;
-}
-
-.negative {
-    color: green;
-}
-
-.btn-primary,
-.btn-secondary {
-    width: 100%;
-}
-
-@media (min-width: 576px) {
-
-    .btn-primary,
-    .btn-secondary {
-        width: auto;
-    }
+    padding: 5px;
+    border-radius: 5px;
 }
 
 .footer {
@@ -61,6 +40,7 @@ h1 {
     text-align: center;
     padding: 10px 0;
     position: relative;
+    margin-top: 20px;
 }
 
 .footer a {
@@ -70,4 +50,52 @@ h1 {
 
 .footer a:hover {
     text-decoration: underline;
+}
+
+.img-fluid {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 220px;
+    background-color: #343a40;
+    padding-top: 20px;
+    transition: all 0.3s;
+}
+
+.sidebar a {
+    padding: 15px 20px;
+    text-decoration: none;
+    font-size: 18px;
+    color: #fff;
+    display: block;
+    transition: all 0.3s;
+}
+
+.sidebar a:hover {
+    background-color: #575757;
+    color: #ffc107;
+}
+
+.sidebar .sidebar-heading {
+    font-size: 20px;
+    color: #ffc107;
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #575757;
+}
+
+.content {
+    margin-left: 240px;
+    padding: 20px;
+    transition: all 0.3s;
 }
