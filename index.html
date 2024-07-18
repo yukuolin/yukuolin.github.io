@@ -25,6 +25,7 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="/my.js"></script>
 
     <!-- google ad -->
@@ -53,17 +54,26 @@
 </head>
 
 <body>
-    <div class="d-flex" id="wrapper">
-        <!-- Sidebar -->
-        <div class="bg-light border-right" id="sidebar-wrapper">
-            <!-- <div class="sidebar-heading">導航</div> -->
-            <div class="list-group list-group-flush">
-                <a href="https://yukuolin.github.io/" class="list-group-item list-group-item-action bg-light">股票當沖計算機</a>
-                <a href="./freshmen.html" class="list-group-item list-group-item-action bg-light">關於股票投資</a>
-            </div>
-        </div>
+    <!-- Navbar -->
 
-        <!-- Page Content -->
+
+    <div class="container mt-5">
+        <nav class="navbar navbar-dark bg-dark">
+            <a class="navbar-brand" href="https://yukuolin.github.io/">股票當沖計算機</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://yukuolin.github.io/">股票當沖計算機</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./freshmen.html">關於股票投資</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
         <div id="page-content-wrapper">
             <div class="container mt-5">
                 <h1 class="h1 text-center">股票當沖計算機(損益計算器)</h1>
