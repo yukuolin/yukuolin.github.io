@@ -99,3 +99,11 @@ p {
     padding: 20px;
     transition: all 0.3s;
 }
+
+.text-danger {
+    color: red;
+}
+
+.text-success {
+    color: green;
+}

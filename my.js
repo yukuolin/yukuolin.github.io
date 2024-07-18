@@ -71,7 +71,8 @@ $(document).ready(function () {
         const totalFees = Math.floor(buyFee + sellFee);
         const highlightClass = (sellPrice === buyPrice) ? 'highlight' : '';
         const profitClass = profitLoss > 0 ? 'positive' : 'negative';
-        return `<tr class="${highlightClass}"><td>${sellPrice.toFixed(2)}</td><td class="${profitClass}">${profitLoss}</td><td>${totalFees}</td><td>${sellTax}</td></tr>`;
+        const profitColorClass = profitLoss > 0 ? 'text-danger' : 'text-success'; // 新增這行
+        return `<tr class="${highlightClass}"><td>${sellPrice.toFixed(2)}</td><td class="${profitClass} ${profitColorClass}">${profitLoss}</td><td>${totalFees}</td><td>${sellTax}</td></tr>`;
     }
 
     function displayResults() {
