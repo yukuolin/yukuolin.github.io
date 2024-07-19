@@ -99,9 +99,29 @@
 </head>
 
 <body>
+    <div id="div-onead-draft"></div>
+    <script type="text/javascript">
+        var custom_call = function (params) {
+            if (params.hasAd) {
+                console.log('TD has AD')
+            } else {
+                console.log('TD AD Empty')
+            }
+        }
+        ONEAD_TEXT = {};
+        ONEAD_TEXT.pub = {};
+        ONEAD_TEXT.pub.uid = "2000257";
+        ONEAD_TEXT.pub.slotobj = document.getElementById("div-onead-draft");
+        ONEAD_TEXT.pub.player_mode = "text-drive";
+        ONEAD_TEXT.pub.queryAdCallback = custom_call;
+        window.ONEAD_text_pubs = window.ONEAD_text_pubs || [];
+        ONEAD_text_pubs.push(ONEAD_TEXT);
+    </script>
+    <script src="https://ad-specs.guoshipartners.com/static/js/ad-serv.min.js"></script>
     <nav class="navbar navbar-dark bg-dark">
         <a class="navbar-brand" href="https://yukuolin.github.io/">股票當沖計算機</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -129,63 +149,63 @@
             <h2>1. 基本交易成本</h2>
             <h3>1.1 手續費</h3>
             <ul>
-              <li>最高費率:成交金額的0.1425%</li>
-              <li>最低收費:20元新台幣</li>
-              <li>計算公式:成交金額 × 手續費率</li>
-              <li>優惠費率:許多券商提供0.06%~0.08%的優惠費率</li>
+                <li>最高費率:成交金額的0.1425%</li>
+                <li>最低收費:20元新台幣</li>
+                <li>計算公式:成交金額 × 手續費率</li>
+                <li>優惠費率:許多券商提供0.06%~0.08%的優惠費率</li>
             </ul>
             <h3>1.2 證券交易稅(證交稅)</h3>
             <ul>
-              <li>普通股票:賣出金額的0.3%</li>
-              <li>ETF:賣出金額的0.1%</li>
-              <li>僅在賣出時收取</li>
+                <li>普通股票:賣出金額的0.3%</li>
+                <li>ETF:賣出金額的0.1%</li>
+                <li>僅在賣出時收取</li>
             </ul>
             <h2>2. 其他相關費用</h2>
             <h3>2.1 融資融券利息</h3>
             <p>對於使用融資融券服務的投資者:</p>
             <ul>
-              <li>融資利率:通常為年利率6%~8%</li>
-              <li>融券利率:通常略高於融資利率</li>
-              <li>計算方式:依據實際使用天數按日計息</li>
+                <li>融資利率:通常為年利率6%~8%</li>
+                <li>融券利率:通常略高於融資利率</li>
+                <li>計算方式:依據實際使用天數按日計息</li>
             </ul>
             <h3>2.2 存摺補發費用</h3>
             <ul>
-              <li>一般為每次100元新台幣</li>
+                <li>一般為每次100元新台幣</li>
             </ul>
             <h3>2.3 資訊服務費</h3>
             <ul>
-              <li>部分券商可能收取,費用因券商而異</li>
-              <li>通常為每月100~300元新台幣</li>
+                <li>部分券商可能收取,費用因券商而異</li>
+                <li>通常為每月100~300元新台幣</li>
             </ul>
             <h2>3. 特殊交易情況</h2>
             <h3>3.1 盤中零股交易</h3>
             <ul>
-              <li>手續費:最低5元新台幣</li>
-              <li>部分券商可能有不同的收費標準</li>
+                <li>手續費:最低5元新台幣</li>
+                <li>部分券商可能有不同的收費標準</li>
             </ul>
             <h3>3.2 定期定額投資</h3>
             <ul>
-              <li>某些券商提供較低的手續費,如0.1%或更低</li>
-              <li>可能有最低投資金額要求</li>
+                <li>某些券商提供較低的手續費,如0.1%或更低</li>
+                <li>可能有最低投資金額要求</li>
             </ul>
             <h3>3.3 夜盤交易</h3>
             <ul>
-              <li>手續費可能較日盤略高</li>
-              <li>需注意匯率風險</li>
+                <li>手續費可能較日盤略高</li>
+                <li>需注意匯率風險</li>
             </ul>
             <h2>4. 稅務考量</h2>
             <h3>4.1 股利所得稅</h3>
             <ul>
-              <li>現金股利:併入個人綜合所得稅申報</li>
-              <li>股票股利:不課稅,但會影響未來賣出時的資本利得計算</li>
+                <li>現金股利:併入個人綜合所得稅申報</li>
+                <li>股票股利:不課稅,但會影響未來賣出時的資本利得計算</li>
             </ul>
             <h3>4.2 證券交易所得稅</h3>
             <p>目前台灣對個人的證券交易所得免稅,但需注意政策可能變動。</p>
             <h2>5. 交割制度</h2>
             <ul>
-              <li>台灣採用T+2交割制度</li>
-              <li>買入:交易日後第二個營業日付款</li>
-              <li>賣出:交易日後第二個營業日收到款項</li>
+                <li>台灣採用T+2交割制度</li>
+                <li>買入:交易日後第二個營業日付款</li>
+                <li>賣出:交易日後第二個營業日收到款項</li>
             </ul>
             <h2>6. 投資策略對成本的影響</h2>
             <h3>6.1 長期持有vs頻繁交易</h3>
@@ -200,17 +220,37 @@
             <h2>8. 選擇合適的券商</h2>
             <p>考慮因素:</p>
             <ul>
-              <li>手續費率</li>
-              <li>平台使用便利性</li>
-              <li>研究資源質量</li>
-              <li>客戶服務</li>
-              <li>額外服務(如財務規劃)</li>
+                <li>手續費率</li>
+                <li>平台使用便利性</li>
+                <li>研究資源質量</li>
+                <li>客戶服務</li>
+                <li>額外服務(如財務規劃)</li>
             </ul>
             <h2>結論</h2>
-            <p>了解台灣股票市場的各項費用、稅收和相關機制,對於優化投資策略和管理成本至關重要。投資者應該根據自己的交易頻率、投資金額和風險承受能力,選擇合適的券商和交易策略。同時,持續關注政策變化,及時調整投資計劃,有助於在競爭激烈的市場中取得更好的投資回報。</p>
-          
+            <p>了解台灣股票市場的各項費用、稅收和相關機制,對於優化投資策略和管理成本至關重要。投資者應該根據自己的交易頻率、投資金額和風險承受能力,選擇合適的券商和交易策略。同時,持續關注政策變化,及時調整投資計劃,有助於在競爭激烈的市場中取得更好的投資回報。
+            </p>
+
         </div>
     </div>
+    <div id="div-onead-draft"></div>
+    <script type="text/javascript">
+        var custom_call = function (params) {
+            if (params.hasAd) {
+                console.log('TD has AD')
+            } else {
+                console.log('TD AD Empty')
+            }
+        }
+        ONEAD_TEXT = {};
+        ONEAD_TEXT.pub = {};
+        ONEAD_TEXT.pub.uid = "2000257";
+        ONEAD_TEXT.pub.slotobj = document.getElementById("div-onead-draft");
+        ONEAD_TEXT.pub.player_mode = "text-drive";
+        ONEAD_TEXT.pub.queryAdCallback = custom_call;
+        window.ONEAD_text_pubs = window.ONEAD_text_pubs || [];
+        ONEAD_text_pubs.push(ONEAD_TEXT);
+    </script>
+    <script src="https://ad-specs.guoshipartners.com/static/js/ad-serv.min.js"></script>
 
     <footer class="footer">
         <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
