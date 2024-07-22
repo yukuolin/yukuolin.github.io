@@ -10,7 +10,7 @@ $(document).ready(function () {
     let sellTaxRate;
     let strategy;
     let allResults = [];
-    let currentResultsCount = 14;
+    let currentResultsCount = 11;
 
     $('#stockForm').on('submit', function (event) {
         event.preventDefault();
@@ -29,9 +29,9 @@ $(document).ready(function () {
         interval = getInterval(buyPrice);
 
         allResults = [];
-        currentResultsCount = 14;
+        currentResultsCount = 11;
 
-        for (let i = -7; i <= 7; i++) {
+        for (let i = -5; i <= 6; i++) {
             const sellPrice = buyPrice + (i * interval);
             allResults.push(calculateResult(sellPrice));
         }
@@ -79,12 +79,12 @@ $(document).ready(function () {
         const totalFees = Math.floor(buyFee + sellFee);
         const highlightClass = (sellPrice === buyPrice) ? 'highlight' : '';
         const profitClass = profitLoss > 0 ? 'positive' : 'negative';
-        const profitColorClass = profitLoss > 0 ? 'text-danger' : 'text-success'; // 新增這行
+        const profitColorClass = profitLoss > 0 ? 'text-danger' : 'text-success'; 
 
         const formattedSellPrice = formatNumber(sellPrice);
-        const formattedProfitLoss = formatNumber(profitLoss);
-        const formattedTotalFees = formatNumber(totalFees);
-        const formattedSellTax = formatNumber(sellTax);
+        const formattedProfitLoss = profitLoss.toFixed(0); 
+        const formattedTotalFees = totalFees.toFixed(0); 
+        const formattedSellTax = sellTax.toFixed(0); 
 
         return `<tr class="${highlightClass}"><td>${formattedSellPrice}</td><td class="${profitClass} ${profitColorClass}">${formattedProfitLoss}</td><td>${formattedTotalFees}</td><td>${formattedSellTax}</td></tr>`;
     }
@@ -118,8 +118,8 @@ $(document).ready(function () {
 
     // Set default values 
     $('#buyPrice').val(200);
-    $('#buyShares').val(1); // Set a default value for shares
-    $('#discount').val(2.8); // Set a default value for discount
-    $('#strategy').val('long'); // Set a default value for strategy
+    $('#buyShares').val(1); 
+    $('#discount').val(2.8); 
+    $('#strategy').val('long'); 
     $('#stockForm').submit();
 });
