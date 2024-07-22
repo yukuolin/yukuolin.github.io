@@ -56,6 +56,14 @@ $(document).ready(function () {
         return 5;
     }
 
+    function formatNumber(num) {
+        let formattedNum = num.toFixed(2);
+        if (formattedNum.endsWith('0')) {
+            formattedNum = num.toFixed(1);
+        }
+        return formattedNum;
+    }
+
     function calculateResult(sellPrice) {
         const sellFee = Math.max(Math.floor(sellPrice * 0.001425 * discount * buyShares), 20);
         const sellTax = Math.floor(sellPrice * shares * sellTaxRate);
@@ -72,7 +80,13 @@ $(document).ready(function () {
         const highlightClass = (sellPrice === buyPrice) ? 'highlight' : '';
         const profitClass = profitLoss > 0 ? 'positive' : 'negative';
         const profitColorClass = profitLoss > 0 ? 'text-danger' : 'text-success'; // 新增這行
-        return `<tr class="${highlightClass}"><td>${sellPrice.toFixed(2)}</td><td class="${profitClass} ${profitColorClass}">${profitLoss}</td><td>${totalFees}</td><td>${sellTax}</td></tr>`;
+
+        const formattedSellPrice = formatNumber(sellPrice);
+        const formattedProfitLoss = formatNumber(profitLoss);
+        const formattedTotalFees = formatNumber(totalFees);
+        const formattedSellTax = formatNumber(sellTax);
+
+        return `<tr class="${highlightClass}"><td>${formattedSellPrice}</td><td class="${profitClass} ${profitColorClass}">${formattedProfitLoss}</td><td>${formattedTotalFees}</td><td>${formattedSellTax}</td></tr>`;
     }
 
     function displayResults() {
@@ -102,8 +116,8 @@ $(document).ready(function () {
         displayResults();
     }
 
-    // Set default values
-    $('#buyPrice').val(100);
+    // Set default values 
+    $('#buyPrice').val(200);
     $('#buyShares').val(1); // Set a default value for shares
     $('#discount').val(2.8); // Set a default value for discount
     $('#strategy').val('long'); // Set a default value for strategy
