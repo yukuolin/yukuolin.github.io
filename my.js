@@ -101,4 +101,11 @@ $(document).ready(function () {
         currentResultsCount += 5;
         displayResults();
     }
+
+    // Set default values
+    $('#buyPrice').val(100);
+    $('#buyShares').val(1); // Set a default value for shares
+    $('#discount').val(2.8); // Set a default value for discount
+    $('#strategy').val('long'); // Set a default value for strategy
+    $('#stockForm').submit();
 });
