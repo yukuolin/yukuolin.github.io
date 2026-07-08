@@ -131,6 +131,12 @@
                     <a class="nav-link active" href="./">當沖計算機</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="./futures.html">期貨計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./position.html">部位大小</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="./freshmen.html">新手投資建議</a>
                 </li>
                 <li class="nav-item">
@@ -181,17 +187,19 @@
                 </div>
                 <button type="submit" class="btn btn-primary mb-2 w-100">計算損益</button>
             </form>
+            <div id="calcSummary" class="summary-bar" style="display: none;"></div>
             <table class="table table-bordered table-responsive-sm results-table" id="resultsTable"
                 style="text-align: center;">
                 <thead class="thead-custom">
                     <tr>
                         <th>賣出價格</th>
                         <th>損益</th>
+                        <th>報酬率</th>
                         <th>總手續費</th>
                         <th>總證交稅</th>
                     </tr>
                     <tr>
-                        <td class="more-results text-center p-2" style="display: none;" colspan="4">
+                        <td class="more-results text-center p-2" style="display: none;" colspan="5">
                             <button class="btn btn-success btn-sm" id="showMoreTop">↑ 顯示更多結果</button>
                         </td>
                     </tr>
@@ -199,7 +207,7 @@
                 <tbody>
                     <!-- Results will be inserted here -->
                     <tr>
-                        <td class="more-results text-center p-2" style="display: none;" colspan="4">
+                        <td class="more-results text-center p-2" style="display: none;" colspan="5">
                             <button class="btn btn-success btn-sm" id="showMoreBottom">↓ 顯示更多結果</button>
                         </td>
                     </tr>
@@ -221,6 +229,12 @@
             <li class="list-group-item">✅ 幫助提高資金使用效率</li>
         </ul>
         <p class="mt-3 text-muted">記住，雖然當沖可能帶來快速收益，但也伴隨著高風險。請務必在充分了解風險的情況下進行交易。</p>
+
+        <h2>更多免費工具</h2>
+        <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">🧮 <a href="./futures.html">台指期貨損益計算機</a>——大台、小台、微台的損益與期交稅試算</li>
+            <li class="list-group-item">🛡️ <a href="./position.html">部位大小計算器</a>——用停損價反推該買幾張，控制單筆風險</li>
+        </ul>
 
         <h2>延伸閱讀</h2>
         <ul class="list-group list-group-flush mt-3">

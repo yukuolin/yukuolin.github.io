@@ -207,6 +207,44 @@ p {
     background-color: var(--primary);
 }
 
+/* ---------- 計算結果摘要列 ---------- */
+.summary-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0.5rem 0 1rem;
+}
+
+.summary-item {
+    flex: 1 1 160px;
+    background: linear-gradient(135deg, #f7f9fc 0%, #eef2f8 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    text-align: center;
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.summary-value {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.summary-note {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
 /* ---------- 結果表格 ---------- */
 .results-table {
     border-radius: var(--radius);

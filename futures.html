@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台指期貨損益計算機 | 大台/小台/微台 | 手續費期交稅試算</title>
+    <meta name="description" content="免費台指期貨損益計算機,支援大台、小台、微台。輸入進出場點數與口數,自動計算損益、手續費與期交稅,並可試算保證金報酬率。期貨當沖必備工具。">
+    <meta name="keywords" content="期貨計算機, 台指期, 大台, 小台, 微台, 期貨損益, 期交稅, 期貨手續費, 保證金, 期貨當沖">
+    <meta name="author" content="Yukuo Lin">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yukuolin.github.io/futures.html">
+
+    <!-- Social Media Integration -->
+    <meta property="og:title" content="台指期貨損益計算機 | 大台/小台/微台 | 手續費期交稅試算">
+    <meta property="og:description" content="輸入進出場點數與口數,自動計算台指期損益、手續費與期交稅,並可試算保證金報酬率。期貨當沖必備工具。">
+    <meta property="og:url" content="https://yukuolin.github.io/futures.html">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="台指期貨損益計算機 | 大台/小台/微台 | 手續費期交稅試算">
+    <meta name="twitter:description" content="輸入進出場點數與口數,自動計算台指期損益、手續費與期交稅,並可試算保證金報酬率。期貨當沖必備工具。">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
+
+    <!-- google ad -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3630139872305550"
+        crossorigin="anonymous"></script>
+
+    <!-- Structured Data for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "台指期貨損益計算機",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "description": "免費線上台指期貨損益計算機,支援大台、小台、微台。自動計算損益、手續費與期交稅,並可試算保證金報酬率。",
+      "url": "https://yukuolin.github.io/futures.html",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TWD"
+      }
+    }
+    </script>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <a class="navbar-brand" href="./">股票當沖計算機</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="./">當沖計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="./futures.html">期貨計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./position.html">部位大小</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./freshmen.html">新手投資建議</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./risk.html">投資風險</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./caculation.html">手續費與證交稅</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <h1 class="mb-2">台指期貨損益計算機</h1>
+        <p class="lead">支援<span class="accent">大台、小台、微台</span>，一鍵試算損益、手續費、期交稅與保證金報酬率</p>
+    </header>
+
+    <div class="content">
+        <div class="container">
+            <form id="futuresForm" class="mt-2">
+                <div class="form-row">
+                    <div class="form-group col-md-3 col-6">
+                        <label for="product">商品</label>
+                        <select class="form-control" id="product" required>
+                            <option value="tx">大台（200 元／點）</option>
+                            <option value="mtx" selected>小台（50 元／點）</option>
+                            <option value="tmf">微台（10 元／點）</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3 col-6">
+                        <label for="futuresDirection">方向</label>
+                        <select class="form-control" id="futuresDirection" required>
+                            <option value="long">做多</option>
+                            <option value="short">做空</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3 col-6">
+                        <label for="entryPoint">進場點數</label>
+                        <input type="number" class="form-control" id="entryPoint" placeholder="例如 23000" min="1"
+                            value="23000" required>
+                    </div>
+                    <div class="form-group col-md-3 col-6">
+                        <label for="exitPoint">出場點數</label>
+                        <input type="number" class="form-control" id="exitPoint" placeholder="例如 23100" min="1"
+                            value="23100" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4 col-6">
+                        <label for="lots">口數</label>
+                        <input type="number" class="form-control" id="lots" min="1" value="1" required>
+                    </div>
+                    <div class="form-group col-md-4 col-6">
+                        <label for="feePerSide">單邊手續費（元／口）</label>
+                        <input type="number" class="form-control" id="feePerSide" min="0" value="25" required>
+                    </div>
+                    <div class="form-group col-md-4 col-12">
+                        <label for="marginPerLot">每口保證金（選填）</label>
+                        <input type="number" class="form-control" id="marginPerLot" min="0"
+                            placeholder="填入可計算報酬率">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2 w-100">計算期貨損益</button>
+            </form>
+            <div id="futuresSummary" class="summary-bar" style="display: none;"></div>
+            <p class="text-muted mt-2" style="font-size: 0.88rem;">
+                ※ 期交稅以契約金額十萬分之二計算（進、出場各收一次）；各商品原始保證金會隨市場調整，請以
+                <a href="https://www.taifex.com.tw/cht/5/stockMargining" target="_blank" rel="noopener">期交所公告</a>為準。
+            </p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="mt-2">台指期貨基本規格</h2>
+        <ul>
+            <li><strong>大台（臺股期貨 TX）：</strong>每點 200 元，適合資金部位較大的交易者。</li>
+            <li><strong>小台（小型臺指 MTX）：</strong>每點 50 元，價值為大台的四分之一，是最多散戶交易的商品。</li>
+            <li><strong>微台（微型臺指 TMF）：</strong>每點 10 元，2024 年推出，適合小資族練習與精細控制部位。</li>
+        </ul>
+
+        <h2>期貨交易成本怎麼算？</h2>
+        <p>期貨的交易成本由兩部分組成：</p>
+        <ul>
+            <li><strong>手續費：</strong>由券商收取，買進、賣出各收一次。金額依券商與談判條件而異，大台常見 50~80 元／口，小台 20~35 元／口，微台 10~20 元／口。</li>
+            <li><strong>期交稅：</strong>政府收取，稅率為契約金額的<strong>十萬分之二</strong>（0.002%），進出場各收一次。以小台 23,000 點為例：23,000 × 50 × 0.00002 = 23 元。</li>
+        </ul>
+        <p>相較股票當沖賣出收 0.15% 證交稅，期貨的稅負低非常多，這也是許多當沖交易者從股票轉向期貨的主因之一。股票的交易成本可參考<a href="./caculation.html">手續費及證交稅的計算方式</a>。</p>
+
+        <h2>期貨交易的風險提醒</h2>
+        <ul>
+            <li><strong>槓桿高：</strong>期貨以保證金交易，槓桿可達十倍以上，獲利與虧損都會放大。</li>
+            <li><strong>可能超額損失：</strong>行情劇烈波動時，虧損可能超過投入的保證金，收到追繳通知（Margin Call）甚至被強制平倉。</li>
+            <li><strong>結算風險：</strong>期貨有到期日，留倉需注意結算日與轉倉成本。</li>
+        </ul>
+        <p>建議搭配<a href="./position.html">部位大小計算器</a>的風險控制觀念，先決定願意虧多少，再決定下幾口。更多風險觀念請參考<a href="./risk.html">股票投資的風險</a>。</p>
+    </div>
+
+    <footer class="footer">
+        <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
+        <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
+    </footer>
+
+    <script>
+        (function () {
+            var SPECS = {
+                tx: { name: '大台', pointValue: 200, defaultFee: 70 },
+                mtx: { name: '小台', pointValue: 50, defaultFee: 25 },
+                tmf: { name: '微台', pointValue: 10, defaultFee: 15 }
+            };
+            var TAX_RATE = 0.00002; // 期交稅：契約金額十萬分之二
+
+            document.getElementById('product').addEventListener('change', function () {
+                document.getElementById('feePerSide').value = SPECS[this.value].defaultFee;
+            });
+
+            document.getElementById('futuresForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                var spec = SPECS[document.getElementById('product').value];
+                var direction = document.getElementById('futuresDirection').value;
+                var entry = parseFloat(document.getElementById('entryPoint').value);
+                var exit = parseFloat(document.getElementById('exitPoint').value);
+                var lots = parseInt(document.getElementById('lots').value);
+                var feePerSide = parseFloat(document.getElementById('feePerSide').value);
+                var marginPerLot = parseFloat(document.getElementById('marginPerLot').value);
+
+                var pointDiff = direction === 'long' ? (exit - entry) : (entry - exit);
+                var gross = pointDiff * spec.pointValue * lots;
+                var totalFee = feePerSide * 2 * lots;
+                // 進、出場各依當時契約金額課稅，逐筆四捨五入
+                var tax = Math.round(entry * spec.pointValue * lots * TAX_RATE) +
+                          Math.round(exit * spec.pointValue * lots * TAX_RATE);
+                var net = gross - totalFee - tax;
+
+                var netClass = net > 0 ? 'text-danger' : (net < 0 ? 'text-success' : '');
+                var html = '';
+                html += '<div class="summary-item"><span class="summary-label">淨損益（' + spec.name + ' ' + (direction === 'long' ? '做多' : '做空') + '）</span><span class="summary-value ' + netClass + '">' + Math.round(net).toLocaleString() + ' 元</span><span class="summary-note">價差 ' + pointDiff.toLocaleString() + ' 點 × ' + spec.pointValue + ' 元 × ' + lots + ' 口</span></div>';
+                html += '<div class="summary-item"><span class="summary-label">總手續費</span><span class="summary-value">' + Math.round(totalFee).toLocaleString() + ' 元</span><span class="summary-note">單邊 ' + feePerSide + ' 元 × 2 × ' + lots + ' 口</span></div>';
+                html += '<div class="summary-item"><span class="summary-label">期交稅</span><span class="summary-value">' + tax.toLocaleString() + ' 元</span><span class="summary-note">契約金額 × 0.002% × 進出各一次</span></div>';
+                if (marginPerLot > 0) {
+                    var roi = net / (marginPerLot * lots) * 100;
+                    var roiClass = roi > 0 ? 'text-danger' : (roi < 0 ? 'text-success' : '');
+                    html += '<div class="summary-item"><span class="summary-label">保證金報酬率</span><span class="summary-value ' + roiClass + '">' + roi.toFixed(2) + '%</span><span class="summary-note">投入保證金 ' + Math.round(marginPerLot * lots).toLocaleString() + ' 元</span></div>';
+                }
+                var summary = document.getElementById('futuresSummary');
+                summary.innerHTML = html;
+                summary.style.display = 'flex';
+            });
+        })();
+    </script>
+</body>
+
+</html>

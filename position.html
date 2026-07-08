@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票部位大小計算器 | 停損反推張數 | 資金風險管理工具</title>
+    <meta name="description" content="免費股票部位大小計算器。輸入帳戶資金、風險比例與停損價,自動反推可買張數。用 2% 法則控制單筆虧損,建立交易紀律。當沖、波段皆適用。">
+    <meta name="keywords" content="部位大小計算器, 資金管理, 風險管理, 2%法則, 停損, 張數計算, 部位控制, 台股, 當沖">
+    <meta name="author" content="Yukuo Lin">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yukuolin.github.io/position.html">
+
+    <!-- Social Media Integration -->
+    <meta property="og:title" content="股票部位大小計算器 | 停損反推張數 | 資金風險管理工具">
+    <meta property="og:description" content="輸入帳戶資金、風險比例與停損價,自動反推可買張數。用 2% 法則控制單筆虧損,建立交易紀律。">
+    <meta property="og:url" content="https://yukuolin.github.io/position.html">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="股票部位大小計算器 | 停損反推張數 | 資金風險管理工具">
+    <meta name="twitter:description" content="輸入帳戶資金、風險比例與停損價,自動反推可買張數。用 2% 法則控制單筆虧損,建立交易紀律。">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
+
+    <!-- google ad -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3630139872305550"
+        crossorigin="anonymous"></script>
+
+    <!-- Structured Data for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "股票部位大小計算器",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "description": "免費線上股票部位大小計算器。輸入帳戶資金、風險比例與停損價,自動反推可買張數,協助投資人控制單筆交易風險。",
+      "url": "https://yukuolin.github.io/position.html",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TWD"
+      }
+    }
+    </script>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <a class="navbar-brand" href="./">股票當沖計算機</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="./">當沖計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./futures.html">期貨計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="./position.html">部位大小</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./freshmen.html">新手投資建議</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./risk.html">投資風險</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./caculation.html">手續費與證交稅</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <h1 class="mb-2">部位大小計算器</h1>
+        <p class="lead">輸入帳戶資金、風險比例與停損價，反推<span class="accent">該買幾張</span>——讓每一筆虧損都在你的控制之內</p>
+    </header>
+
+    <div class="content">
+        <div class="container">
+            <form id="positionForm" class="mt-2">
+                <div class="form-row">
+                    <div class="form-group col-md-3 col-6">
+                        <label for="capital">帳戶總資金（元）</label>
+                        <input type="number" class="form-control" id="capital" placeholder="例如 500000" min="1"
+                            value="500000" required>
+                    </div>
+                    <div class="form-group col-md-3 col-6">
+                        <label for="riskPct">單筆風險上限（%）</label>
+                        <input type="number" class="form-control" id="riskPct" placeholder="建議 1~2" min="0.1" max="100"
+                            step="0.1" value="2" required>
+                    </div>
+                    <div class="form-group col-md-3 col-6">
+                        <label for="entryPrice">進場價</label>
+                        <input type="number" class="form-control" id="entryPrice" placeholder="輸入進場價" min="0.01"
+                            step="0.01" value="200" required>
+                    </div>
+                    <div class="form-group col-md-3 col-6">
+                        <label for="stopPrice">停損價</label>
+                        <input type="number" class="form-control" id="stopPrice" placeholder="輸入停損價" min="0.01"
+                            step="0.01" value="196" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2 w-100">計算部位大小</button>
+            </form>
+            <div id="positionSummary" class="summary-bar" style="display: none;"></div>
+            <p id="positionNote" class="text-muted mt-2" style="display: none; font-size: 0.88rem;"></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="mt-2">什麼是部位大小控制？</h2>
+        <p>
+            部位大小（Position Sizing）是專業交易者最重要的風險管理工具。核心概念很簡單：<strong>先決定這筆交易最多願意賠多少錢，再反推可以買幾張</strong>，而不是憑感覺決定買多少。
+        </p>
+        <p>
+            常見的做法是「2% 法則」：單筆交易的最大虧損不超過帳戶總資金的 2%。以 50 萬資金為例，單筆最多虧 1 萬元。如果你的進場價是 200 元、停損設在 196
+            元，每張股票的風險是 4,000 元，那麼這筆交易最多只能買 2 張——就算再看好，也不該超過這個數字。
+        </p>
+
+        <h2>為什麼部位控制比選股更重要？</h2>
+        <ul>
+            <li><strong>避免一次重傷：</strong>再高的勝率也會遇到連續虧損。控制單筆風險，連錯 5 次也只損失總資金約 10%，還有充足的本金翻身。</li>
+            <li><strong>去除情緒因素：</strong>部位大小由公式決定，不會因為「這次特別有把握」而重押。</li>
+            <li><strong>讓停損有意義：</strong>先設停損再算部位，停損價不再是隨便畫的線，而是整個交易計畫的基礎。</li>
+        </ul>
+
+        <h2>使用注意事項</h2>
+        <ul>
+            <li>計算結果未包含手續費與證交稅，實際虧損會略大於風險預算，詳見<a href="./caculation.html">手續費及證交稅的計算方式</a>。</li>
+            <li>停損單不保證成交在停損價：跳空、流動性不足時實際虧損可能擴大，重要消息前後請特別留意。</li>
+            <li>做空同樣適用：停損價高於進場價時，本工具會自動以價差絕對值計算。</li>
+            <li>算完部位後，可以用<a href="./">當沖計算機</a>試算各價位的實際損益。</li>
+        </ul>
+    </div>
+
+    <footer class="footer">
+        <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
+        <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
+    </footer>
+
+    <script>
+        document.getElementById('positionForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var capital = parseFloat(document.getElementById('capital').value);
+            var riskPct = parseFloat(document.getElementById('riskPct').value);
+            var entry = parseFloat(document.getElementById('entryPrice').value);
+            var stop = parseFloat(document.getElementById('stopPrice').value);
+            var summary = document.getElementById('positionSummary');
+            var note = document.getElementById('positionNote');
+
+            var perShareRisk = Math.abs(entry - stop);
+            if (perShareRisk === 0) {
+                summary.style.display = 'none';
+                note.textContent = '進場價與停損價不能相同，請重新輸入。';
+                note.style.display = 'block';
+                return;
+            }
+
+            var riskBudget = capital * riskPct / 100;      // 這筆交易願意承受的最大虧損
+            var perLotRisk = perShareRisk * 1000;           // 每張（1000 股）的風險金額
+            var lots = Math.floor(riskBudget / perLotRisk);
+            var actualRisk = lots * perLotRisk;
+            var positionValue = lots * entry * 1000;
+            var positionPct = capital > 0 ? (positionValue / capital * 100) : 0;
+            var direction = stop < entry ? '做多' : '做空';
+
+            var html = '';
+            html += '<div class="summary-item"><span class="summary-label">建議部位（' + direction + '）</span><span class="summary-value">' + lots.toLocaleString() + ' 張</span><span class="summary-note">風險預算 ' + Math.round(riskBudget).toLocaleString() + ' 元</span></div>';
+            html += '<div class="summary-item"><span class="summary-label">實際承受風險</span><span class="summary-value">' + Math.round(actualRisk).toLocaleString() + ' 元</span><span class="summary-note">每張風險 ' + Math.round(perLotRisk).toLocaleString() + ' 元</span></div>';
+            html += '<div class="summary-item"><span class="summary-label">部位總值</span><span class="summary-value">' + Math.round(positionValue).toLocaleString() + ' 元</span><span class="summary-note">佔資金 ' + positionPct.toFixed(1) + '%</span></div>';
+            summary.innerHTML = html;
+            summary.style.display = 'flex';
+
+            if (lots === 0) {
+                note.textContent = '依目前的風險預算買不到 1 張。可以考慮：放寬停損距離、提高風險比例，或改用零股交易。';
+                note.style.display = 'block';
+            } else if (positionValue > capital) {
+                note.textContent = '注意：部位總值已超過帳戶資金，需使用融資或當沖額度才能建立此部位。';
+                note.style.display = 'block';
+            } else {
+                note.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
