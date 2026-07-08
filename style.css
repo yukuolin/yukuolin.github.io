@@ -1,50 +1,298 @@
+/* ==========================================================
+   股票當沖計算機 — 全站共用樣式
+   配色：深藍 + 琥珀金（台股慣例：紅漲綠跌）
+   ========================================================== */
+
+:root {
+    --primary: #13294b;
+    --primary-light: #1e3a5f;
+    --primary-dark: #0c1c34;
+    --accent: #f5b301;
+    --accent-dark: #d99a00;
+    --bg: #f4f6fa;
+    --card-bg: #ffffff;
+    --text: #2b3445;
+    --text-muted: #6b7486;
+    --border: #e3e8f0;
+    --up: #d6414b;      /* 台股：紅 = 獲利 */
+    --down: #1d9e6f;    /* 台股：綠 = 虧損 */
+    --radius: 12px;
+    --shadow-sm: 0 1px 3px rgba(19, 41, 75, 0.08);
+    --shadow: 0 4px 16px rgba(19, 41, 75, 0.10);
+    --shadow-lg: 0 10px 30px rgba(19, 41, 75, 0.14);
+}
+
 body {
-    background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
+    background-color: var(--bg);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
 }
 
-.container {
-    background-color: #fff;
-    padding: 20px;
+/* ---------- 導覽列 ---------- */
+.navbar.bg-dark {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%) !important;
+    box-shadow: var(--shadow);
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.02em;
+}
+
+.navbar-brand::before {
+    content: "📈 ";
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
+    transition: color 0.2s, background-color 0.2s;
 }
 
-h1 {
-    background-color: #343a40;
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+/* ---------- 頁面主標題（hero 區塊） ---------- */
+.hero {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%);
     color: #fff;
     text-align: center;
-    padding: 10px 0;
-    border-radius: 8px;
+    padding: 3rem 1rem 2.5rem;
+    margin-bottom: -1.5rem;
+}
+
+.hero h1 {
+    font-weight: 700;
+    font-size: 1.9rem;
+    margin-bottom: 0.6rem;
+    color: #fff;
+    border-bottom: none;
+    padding: 0;
+}
+
+.hero .lead {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1.05rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.hero .lead .accent {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+/* ---------- 內容容器 / 卡片 ---------- */
+.container {
+    background-color: var(--card-bg);
+    padding: 2rem 1.75rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 960px;
+}
+
+.card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ---------- 標題 ---------- */
+h1 {
+    color: var(--primary);
+    font-weight: 700;
+    text-align: center;
+    padding: 0.25rem 0 0.75rem;
+    font-size: 1.75rem;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 1.25rem;
 }
 
 h2 {
-    margin-top: 20px;
-    color: #343a40;
+    margin-top: 2rem;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 1.35rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid var(--accent);
+}
+
+h3 {
+    color: var(--primary-light);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-top: 1.25rem;
 }
 
 p {
-    line-height: 1.6;
+    line-height: 1.8;
 }
 
+/* ---------- 表單 ---------- */
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.form-control {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+    height: auto;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.2);
+}
+
+.form-check-label {
+    font-weight: 600;
+}
+
+.form-check-input {
+    transform: scale(1.15);
+}
+
+/* ---------- 按鈕 ---------- */
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    border: none;
+    color: var(--primary-dark);
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(245, 179, 1, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: linear-gradient(135deg, #ffc21a 0%, var(--accent) 100%);
+    color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(245, 179, 1, 0.45);
+}
+
+.btn-success {
+    background-color: var(--primary-light);
+    border: none;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.35rem 1.25rem;
+    transition: background-color 0.2s;
+}
+
+.btn-success:hover,
+.btn-success:focus {
+    background-color: var(--primary);
+}
+
+/* ---------- 結果表格 ---------- */
+.results-table {
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    margin-top: 1.5rem;
+}
+
+.results-table thead th {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    padding: 0.85rem 0.5rem;
+    font-size: 0.95rem;
+}
+
+.results-table td {
+    border-color: var(--border);
+    padding: 0.65rem 0.5rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.results-table tbody tr:nth-child(odd):not(.highlight) {
+    background-color: #fafbfd;
+}
+
+.results-table tbody tr:hover:not(.highlight) {
+    background-color: #f0f4fa;
+}
+
+/* 買入價那一列 */
+.results-table .highlight,
 .highlight {
-    background-color: #dcdcdc;
+    background-color: #fff7dd;
     padding: 5px;
     border-radius: 5px;
 }
 
+.results-table .highlight td {
+    font-weight: 700;
+    border-top: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+}
+
+.more-results {
+    background-color: #f7f9fc !important;
+}
+
+/* 台股慣例：紅漲綠跌 */
+.text-danger,
+.results-table .positive {
+    color: var(--up) !important;
+    font-weight: 700;
+}
+
+.text-success,
+.results-table .negative {
+    color: var(--down) !important;
+    font-weight: 700;
+}
+
+/* ---------- 說明卡片 ---------- */
+.list-group-item {
+    border-color: var(--border);
+    padding: 0.85rem 1.25rem;
+}
+
+/* ---------- 頁尾 ---------- */
 .footer {
-    background-color: #343a40;
-    color: #fff;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+    color: rgba(255, 255, 255, 0.85);
     text-align: center;
-    padding: 10px 0;
+    padding: 1.5rem 1rem;
     position: relative;
-    margin-top: 20px;
+    margin-top: 3rem;
+    font-size: 0.88rem;
+}
+
+.footer p {
+    margin-bottom: 0.4rem;
 }
 
 .footer a {
-    color: #ffc107;
+    color: var(--accent);
     text-decoration: none;
 }
 
@@ -52,6 +300,7 @@ p {
     text-decoration: underline;
 }
 
+/* ---------- 其他 ---------- */
 .img-fluid {
     max-width: 100%;
     height: auto;
@@ -59,51 +308,30 @@ p {
     margin-top: 10px;
 }
 
-/* Sidebar Styles */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 220px;
-    background-color: #343a40;
-    padding-top: 20px;
-    transition: all 0.3s;
-}
+/* ---------- 響應式 ---------- */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 1.5rem;
+    }
 
-.sidebar a {
-    padding: 15px 20px;
-    text-decoration: none;
-    font-size: 18px;
-    color: #fff;
-    display: block;
-    transition: all 0.3s;
-}
+    .container {
+        padding: 1.5rem 1.1rem;
+        margin-left: 0.75rem;
+        margin-right: 0.75rem;
+        width: auto;
+    }
 
-.sidebar a:hover {
-    background-color: #575757;
-    color: #ffc107;
-}
+    h1 {
+        font-size: 1.4rem;
+    }
 
-.sidebar .sidebar-heading {
-    font-size: 20px;
-    color: #ffc107;
-    text-align: center;
-    margin-bottom: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid #575757;
-}
+    h2 {
+        font-size: 1.2rem;
+    }
 
-.content {
-    margin-left: 240px;
-    padding: 20px;
-    transition: all 0.3s;
-}
-
-.text-danger {
-    color: red;
-}
-
-.text-success {
-    color: green;
+    .results-table thead th,
+    .results-table td {
+        font-size: 0.88rem;
+        padding: 0.55rem 0.3rem;
+    }
 }
