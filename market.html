@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率</title>
+    <meta name="description" content="每日更新台股市場焦點：當日成交量前二十名熱門股票、三大法人買賣金額、外資與投信買賣超排行、強弱勢類股族群、台幣匯率變化。免費查詢，資料來源為臺灣證券交易所。">
+    <meta name="keywords" content="台股, 熱門股票, 成交量排行, 三大法人, 外資買賣超, 投信買賣超, 類股, 熱門族群, 台幣匯率, 美元匯率, 加權指數">
+    <meta name="author" content="Yukuo Lin">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yukuolin.github.io/market.html">
+
+    <!-- Social Media Integration -->
+    <meta property="og:title" content="台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率">
+    <meta property="og:description" content="每日更新台股市場焦點：當日成交量排行、三大法人買賣金額、外資與投信買賣超、強弱勢族群、台幣匯率變化。">
+    <meta property="og:url" content="https://yukuolin.github.io/market.html">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率">
+    <meta name="twitter:description" content="每日更新台股市場焦點：當日成交量排行、三大法人買賣金額、外資與投信買賣超、強弱勢族群、台幣匯率變化。">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
+    <script src="/market.js" defer></script>
+
+    <!-- google ad -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3630139872305550"
+        crossorigin="anonymous"></script>
+
+    <!-- Structured Data for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "WebPage",
+        "name": "台股市場焦點",
+        "description": "每日更新台股市場焦點：當日成交量前二十名熱門股票、三大法人買賣金額、外資與投信買賣超排行、強弱勢類股族群、台幣匯率變化。",
+        "author": {
+            "@type": "Person",
+            "name": "Yukuo Lin"
+        },
+        "mainEntity": {
+            "@type": "WebPageElement",
+            "name": "台股市場焦點",
+            "description": "當日熱門交易股票、三大法人買賣超、外資動向、熱門族群與台幣匯率總覽。",
+            "url": "https://yukuolin.github.io/market.html"
+        }
+    }
+    </script>
+</head>
+
+<body role="document">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <a class="navbar-brand" href="./">股票當沖計算機</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="./">當沖計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./futures.html">期貨計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./position.html">部位大小</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="./market.html">市場焦點</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./freshmen.html">新手投資建議</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./risk.html">投資風險</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./caculation.html">手續費與證交稅</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <h1 class="mb-2">台股市場焦點</h1>
+        <p class="lead">當日<span class="accent">熱門股票</span>、三大法人與外資買賣超、強弱勢族群、台幣匯率，一頁掌握</p>
+    </header>
+
+    <div id="page-content-wrapper">
+        <!-- 讀取狀態 / 資料日期 -->
+        <div class="container">
+            <div id="marketStatus" class="market-status text-center text-muted">資料載入中…</div>
+
+            <!-- 大盤摘要卡 -->
+            <div id="marketSummary" class="summary-bar" style="display:none;"></div>
+        </div>
+
+        <!-- 三大法人 -->
+        <div class="container">
+            <h2 class="mt-0">三大法人買賣金額統計</h2>
+            <p class="text-muted small mb-2">單位：億元。買賣差額為正代表法人買超（紅），為負代表賣超（綠）。</p>
+            <div class="table-responsive">
+                <table class="table table-bordered results-table mb-0" id="instTable" style="text-align:center;">
+                    <thead class="thead-custom">
+                        <tr>
+                            <th>單位名稱</th>
+                            <th>買進金額</th>
+                            <th>賣出金額</th>
+                            <th>買賣差額</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 熱門族群 -->
+        <div class="container">
+            <h2 class="mt-0">當日熱門族群（類股指數漲跌排行）</h2>
+            <p class="text-muted small mb-2">以臺灣證券交易所各類股指數當日漲跌幅排序，觀察資金流向哪些族群。</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h3 class="sector-title up-title">🔥 強勢族群</h3>
+                    <ul class="list-group sector-list" id="sectorUp"></ul>
+                </div>
+                <div class="col-md-6">
+                    <h3 class="sector-title down-title">🧊 弱勢族群</h3>
+                    <ul class="list-group sector-list" id="sectorDown"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 外資 / 投信買賣超 -->
+        <div class="container">
+            <h2 class="mt-0">外資與投信買賣超排行</h2>
+            <p class="text-muted small mb-2">單位：張（千股）。含 ETF；資料為集中市場（上市）個股。</p>
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <h3 class="rank-title">外資買超 Top 10</h3>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered results-table rank-table" id="foreignBuyTable">
+                            <thead><tr><th>代號</th><th>名稱</th><th class="text-right">買超(張)</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <h3 class="rank-title">外資賣超 Top 10</h3>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered results-table rank-table" id="foreignSellTable">
+                            <thead><tr><th>代號</th><th>名稱</th><th class="text-right">賣超(張)</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <h3 class="rank-title">投信買超 Top 10</h3>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered results-table rank-table" id="trustBuyTable">
+                            <thead><tr><th>代號</th><th>名稱</th><th class="text-right">買超(張)</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 熱門股 -->
+        <div class="container">
+            <h2 class="mt-0">當日成交量前二十名熱門股</h2>
+            <p class="text-muted small mb-2">依成交股數排行，為當日市場人氣指標。單位：張。</p>
+            <div class="table-responsive">
+                <table class="table table-bordered results-table mb-0" id="hotTable" style="text-align:center;">
+                    <thead class="thead-custom">
+                        <tr>
+                            <th>#</th>
+                            <th>代號</th>
+                            <th>名稱</th>
+                            <th>收盤</th>
+                            <th>漲跌</th>
+                            <th>漲跌幅</th>
+                            <th>成交量(張)</th>
+                            <th>成交筆數</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 台幣匯率 -->
+        <div class="container">
+            <h2 class="mt-0">台幣匯率變化</h2>
+            <p class="text-muted small mb-2">國際中間價參考匯率（1 單位外幣兌換新台幣），紅色代表台幣貶值（外幣變貴）、綠色代表台幣升值。</p>
+            <div class="table-responsive">
+                <table class="table table-bordered results-table mb-0" id="fxTable" style="text-align:center;">
+                    <thead class="thead-custom">
+                        <tr>
+                            <th>幣別</th>
+                            <th>匯率</th>
+                            <th>較前次</th>
+                            <th>近 30 日區間</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p class="text-muted small mt-2 mb-0" id="fxNote"></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="mt-2">如何解讀這些市場資訊？</h2>
+        <h3>三大法人買賣超</h3>
+        <p>
+            三大法人指外資（外資及陸資）、投信（本國投資信託基金）與自營商（證券自營商）。法人資金規模大、研究資源多，其買賣動向常被視為市場風向球。外資連續買超通常代表國際資金看好台股；投信買超的中小型股則常有波段行情。
+        </p>
+        <h3>成交量排行（熱門股）</h3>
+        <p>
+            成交量大代表市場關注度高、流動性佳，進出容易，是當沖交易者選股的重要條件之一。搭配<a href="./">當沖計算機</a>試算損益，並用<a href="./position.html">部位大小計算器</a>控制風險，交易更有紀律。
+        </p>
+        <h3>熱門族群（類股輪動）</h3>
+        <p>
+            台股常見「族群輪動」現象：資金在半導體、光電、航運、金融等類股之間流動。觀察當日強弱勢類股指數，有助於判斷資金流向、避免追高已經漲多的族群。
+        </p>
+        <h3>台幣匯率與台股的關係</h3>
+        <p>
+            台幣升值通常伴隨外資匯入買股，對台股偏多；台幣快速貶值則常見於外資賣股匯出。出口導向的電子股獲利也會受匯率影響，因此匯率是觀察台股資金面的重要指標。
+        </p>
+
+        <h2>更多免費工具</h2>
+        <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">🧮 <a href="./">股票當沖計算機</a>——做多／做空損益、手續費與證交稅試算</li>
+            <li class="list-group-item">🧮 <a href="./futures.html">台指期貨損益計算機</a>——大台、小台、微台的損益與期交稅試算</li>
+            <li class="list-group-item">🛡️ <a href="./position.html">部位大小計算器</a>——用停損價反推該買幾張，控制單筆風險</li>
+        </ul>
+
+        <h2>資料來源與更新頻率</h2>
+        <p class="mb-0">
+            台股資料來源為<a href="https://www.twse.com.tw/" target="_blank" rel="noopener">臺灣證券交易所</a>公開資訊，於每個交易日收盤後自動更新（約 16:30 與 19:30 各更新一次）；匯率為國際市場中間價參考值，非銀行牌告價。資料可能延遲或因來源異動而中斷，投資前請以官方公告為準。
+        </p>
+    </div>
+
+    <footer class="footer">
+        <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
+        <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
+    </footer>
+</body>
+
+</html>

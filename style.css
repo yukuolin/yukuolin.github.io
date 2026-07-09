@@ -346,6 +346,60 @@ p {
     margin-top: 10px;
 }
 
+/* ---------- 市場焦點頁 ---------- */
+/* 台股慣例：紅漲綠跌（匯率頁：紅 = 台幣貶值） */
+.val-up {
+    color: var(--up) !important;
+    font-weight: 700;
+}
+
+.val-down {
+    color: var(--down) !important;
+    font-weight: 700;
+}
+
+.market-status {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.sector-title,
+.rank-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0.75rem 0 0.5rem;
+    padding-left: 0;
+}
+
+.up-title {
+    color: var(--up);
+}
+
+.down-title {
+    color: var(--down);
+}
+
+.sector-list .list-group-item {
+    padding: 0.55rem 1rem;
+    font-size: 0.95rem;
+}
+
+.rank-table td,
+.rank-table th {
+    font-size: 0.88rem;
+    padding: 0.45rem 0.5rem;
+    vertical-align: middle;
+}
+
+.rank-table thead th {
+    padding: 0.55rem 0.5rem;
+}
+
+#instTable td.text-left,
+.rank-table td.text-left {
+    text-align: left;
+}
+
 /* ---------- 響應式 ---------- */
 @media (max-width: 768px) {
     .hero h1 {
