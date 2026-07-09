@@ -184,38 +184,33 @@
         document.getElementById("tvChart").innerHTML = "";
     }
 
-    function yahooSymbol(code, isOtc) {
-        return code + (isOtc ? ".TWO" : ".TW");
-    }
+    // range 代碼 → 往回推的月數
+    var RANGE_MONTHS = { "3mo": 3, "6mo": 6, "1y": 12, "3y": 36 };
 
-    function fetchCandles(code, isOtc, range) {
-        var url = "https://query1.finance.yahoo.com/v8/finance/chart/" +
-            encodeURIComponent(yahooSymbol(code, isOtc)) +
-            "?range=" + range + "&interval=1d&events=div";
-        // 先直連（若對方有開 CORS），失敗再走公共代理
+    function fetchCandles(code, range) {
+        var d = new Date();
+        d.setMonth(d.getMonth() - (RANGE_MONTHS[range] || 6));
+        var start = d.toISOString().slice(0, 10);
+        // FinMind 開放 API：台股（上市＋上櫃）日線，有開 CORS 可直連
+        var url = "https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice" +
+            "&data_id=" + encodeURIComponent(code) + "&start_date=" + start;
         return fetch(url).then(function (r) {
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();
-        }).catch(function () {
-            return fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url))
-                .then(function (r) {
-                    if (!r.ok) throw new Error("HTTP " + r.status);
-                    return r.json();
-                });
         }).then(function (d) {
-            var res = d && d.chart && d.chart.result && d.chart.result[0];
-            if (!res || !res.timestamp) throw new Error("no data");
-            var q = res.indicators.quote[0];
+            var rows = d && d.data;
+            if (!rows || !rows.length) throw new Error("no data");
             var candles = [], volumes = [];
-            for (var i = 0; i < res.timestamp.length; i++) {
-                if (q.close[i] == null || q.open[i] == null || q.high[i] == null || q.low[i] == null) continue;
-                var t = res.timestamp[i];
-                candles.push({ time: t, open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i] });
+            for (var i = 0; i < rows.length; i++) {
+                var r = rows[i];
+                if (r.close == null || r.open == null || !r.close) continue;
+                candles.push({ time: r.date, open: r.open, high: r.max, low: r.min, close: r.close });
                 volumes.push({
-                    time: t, value: q.volume[i] || 0,
-                    color: q.close[i] >= q.open[i] ? "rgba(214,65,75,0.35)" : "rgba(29,158,111,0.35)"
+                    time: r.date, value: r.Trading_Volume || 0,
+                    color: r.close >= r.open ? "rgba(214,65,75,0.35)" : "rgba(29,158,111,0.35)"
                 });
             }
+            if (!candles.length) throw new Error("empty");
             return { candles: candles, volumes: volumes };
         });
     }
@@ -243,7 +238,7 @@
         chartMsg('<span class="text-muted">線圖載入中…</span>');
 
         var myCode = code;
-        fetchCandles(code, isOtc, chartRange).then(function (data) {
+        fetchCandles(code, chartRange).then(function (data) {
             if (currentCode !== myCode) return;
             chartMsg("");
             destroyChart();
@@ -314,6 +309,17 @@
         return Math.round(hrs / 24) + " 天前";
     }
 
+    function newsItemHtml(title, link, src, pub) {
+        // Google News 標題格式「標題 - 媒體名」，沒有 source 欄位時從標題拆
+        if (!src) {
+            var m = title.match(/^(.*)\s-\s([^-]+)$/);
+            if (m) { title = m[1]; src = m[2]; }
+        }
+        return '<a class="news-item" target="_blank" rel="noopener" href="' + esc(link) + '">' +
+            '<span class="news-title">' + esc(title) + "</span>" +
+            '<span class="news-meta">' + esc(src || "") + (pub ? "・" + timeAgo(pub) : "") + "</span></a>";
+    }
+
     function renderNews(code, name, isOtc) {
         var box = document.getElementById("stockNews");
         var links = document.getElementById("stockNewsLinks");
@@ -323,44 +329,55 @@
         var myCode = code;
         var rss = "https://news.google.com/rss/search?q=" + encodeURIComponent('"' + name + '"') +
             "&hl=zh-TW&gl=TW&ceid=TW:zh-Hant";
-        var proxied = "https://api.allorigins.win/raw?url=" + encodeURIComponent(rss);
 
         var timer = setTimeout(function () {
             if (currentCode === myCode) {
                 box.innerHTML = '<p class="text-muted">新聞載入逾時，請改用下方連結查看。</p>';
             }
-        }, 12000);
+        }, 20000);
 
-        fetch(proxied).then(function (r) {
-            if (!r.ok) throw new Error("HTTP " + r.status);
-            return r.text();
-        }).then(function (xml) {
+        function done(html) {
             clearTimeout(timer);
-            if (currentCode !== myCode) return; // 使用者已查別檔
-            var doc = new DOMParser().parseFromString(xml, "text/xml");
-            var items = doc.querySelectorAll("item");
-            if (!items.length) {
-                box.innerHTML = '<p class="text-muted">目前沒有找到相關新聞，請改用下方連結搜尋。</p>';
-                return;
-            }
-            var html = "";
-            for (var i = 0; i < Math.min(items.length, 8); i++) {
-                var it = items[i];
-                var title = (it.querySelector("title") || {}).textContent || "";
-                var link = (it.querySelector("link") || {}).textContent || "#";
-                var pub = (it.querySelector("pubDate") || {}).textContent || "";
-                var srcEl = it.getElementsByTagName("source")[0];
-                var src = srcEl ? srcEl.textContent : "";
-                html += '<a class="news-item" target="_blank" rel="noopener" href="' + esc(link) + '">' +
-                    '<span class="news-title">' + esc(title) + "</span>" +
-                    '<span class="news-meta">' + esc(src) + (pub ? "・" + timeAgo(pub) : "") + "</span></a>";
-            }
-            box.innerHTML = html;
-        }).catch(function () {
-            clearTimeout(timer);
-            if (currentCode !== myCode) return;
-            box.innerHTML = '<p class="text-muted">新聞來源暫時無法連線，請改用下方連結查看。</p>';
-        });
+            if (currentCode === myCode) box.innerHTML = html;
+        }
+
+        // 主要來源：rss2json（快、回 JSON）；備援：allorigins（回原始 XML）
+        fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rss))
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d || d.status !== "ok" || !d.items || !d.items.length) throw new Error("rss2json empty");
+                return d.items.slice(0, 8).map(function (it) {
+                    return newsItemHtml(it.title || "", it.link || "#", it.author || "", it.pubDate || "");
+                }).join("");
+            })
+            .catch(function () {
+                return fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(rss))
+                    .then(function (r) {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.text();
+                    })
+                    .then(function (xml) {
+                        var doc = new DOMParser().parseFromString(xml, "text/xml");
+                        var items = doc.querySelectorAll("item");
+                        if (!items.length) throw new Error("no items");
+                        var html = "";
+                        for (var i = 0; i < Math.min(items.length, 8); i++) {
+                            var it = items[i];
+                            var srcEl = it.getElementsByTagName("source")[0];
+                            html += newsItemHtml(
+                                (it.querySelector("title") || {}).textContent || "",
+                                (it.querySelector("link") || {}).textContent || "#",
+                                srcEl ? srcEl.textContent : "",
+                                (it.querySelector("pubDate") || {}).textContent || ""
+                            );
+                        }
+                        return html;
+                    });
+            })
+            .then(done)
+            .catch(function () {
+                done('<p class="text-muted">新聞來源暫時無法連線，請改用下方連結查看。</p>');
+            });
     }
 
     /* ---------- 初始化 ---------- */
