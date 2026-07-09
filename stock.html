@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台股個股查詢 | 盤後資訊、三大法人買賣超、技術線圖、個股新聞</title>
-    <meta name="description" content="輸入台股代號或名稱，快速查詢個股盤後資訊：收盤價、漲跌幅、成交量、本益比、殖利率、三大法人買賣超，並提供技術線圖與最新個股新聞。支援上市與上櫃股票。">
-    <meta name="keywords" content="台股查詢, 個股查詢, 股票代號, 盤後資訊, 收盤價, 三大法人, 外資買賣超, 技術線圖, K線圖, 個股新聞, 本益比, 殖利率">
+    <meta name="description" content="輸入台股代號或名稱，快速查詢個股盤後資訊：收盤價、漲跌幅、成交量、本益比、殖利率、三大法人買賣超，並提供技術線圖、KD/RSI/MACD/布林通道等技術分析結論與最新個股新聞。支援上市與上櫃股票。">
+    <meta name="keywords" content="台股查詢, 個股查詢, 股票代號, 盤後資訊, 收盤價, 三大法人, 外資買賣超, 技術線圖, K線圖, 技術分析, KD指標, RSI, MACD, 布林通道, 乖離率, 個股新聞, 本益比, 殖利率">
     <meta name="author" content="Yukuo Lin">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://yukuolin.github.io/stock.html">
@@ -177,6 +177,30 @@
                 </p>
             </div>
 
+            <!-- 技術分析結論 -->
+            <div class="container">
+                <h2 class="mt-0">技術分析結論</h2>
+                <div id="taVerdict" class="ta-verdict" style="display:none;"></div>
+                <div class="table-responsive">
+                    <table class="table table-bordered results-table mb-0" id="taTable">
+                        <thead class="thead-custom">
+                            <tr>
+                                <th style="width:20%">指標</th>
+                                <th style="width:40%">數值</th>
+                                <th>判讀</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" class="text-muted text-center">技術指標計算中…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mt-2 mb-0">
+                    以日線資料計算：均線 5/20/60、KD（9,3,3）、RSI（14）、MACD（12,26,9）、布林通道（20,2）、20 日乖離率、5 日均量。
+                    技術指標僅反映歷史價格統計，可能鈍化或落後，不構成投資建議。
+                </p>
+            </div>
+
             <!-- 新聞 -->
             <div class="container">
                 <h2 class="mt-0">相關新聞</h2>
@@ -192,7 +216,8 @@
                 <li class="list-group-item">📈 <strong>盤後資訊</strong>——收盤價、漲跌幅、開高低、成交量與成交金額</li>
                 <li class="list-group-item">🏦 <strong>三大法人買賣超</strong>——外資、投信、自營商當日買賣超張數（上市個股）</li>
                 <li class="list-group-item">💰 <strong>基本評價</strong>——本益比、股價淨值比、現金殖利率</li>
-                <li class="list-group-item">🕯️ <strong>技術線圖</strong>——互動式 K 線圖，可切換日/週/月線與技術指標</li>
+                <li class="list-group-item">🕯️ <strong>技術線圖</strong>——互動式 K 線圖，含均線與成交量，可切換區間</li>
+                <li class="list-group-item">🧭 <strong>技術分析結論</strong>——均線排列、KD、RSI、MACD、布林通道、乖離率、量能一次判讀，彙總偏多偏空</li>
                 <li class="list-group-item">📰 <strong>個股新聞</strong>——即時彙整該股最新相關報導</li>
             </ul>
             <p class="mt-3 text-muted">支援上市（TWSE）與上櫃（TPEx）股票、ETF。熱門查詢：

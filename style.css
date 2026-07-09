@@ -590,6 +590,65 @@ p {
     color: #fff;
 }
 
+/* 技術分析結論 */
+.ta-verdict {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, #f7f9fc 0%, #eef2f8 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.ta-verdict-badge {
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 0.3rem 1.1rem;
+    border-radius: 999px;
+    color: #fff;
+}
+
+.ta-verdict-text {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+
+.ta-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    color: #fff;
+    vertical-align: baseline;
+    margin-right: 0.25rem;
+    white-space: nowrap;
+}
+
+.ta-bull {
+    background-color: var(--up);
+}
+
+.ta-bear {
+    background-color: var(--down);
+}
+
+.ta-flat {
+    background-color: #8a93a6;
+}
+
+#taTable td {
+    font-size: 0.92rem;
+    vertical-align: middle;
+}
+
+#taTable td.text-left {
+    text-align: left;
+}
+
 .news-item {
     display: block;
     padding: 0.7rem 0.25rem;

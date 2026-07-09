@@ -158,6 +158,7 @@
         }
 
         renderChart(code, isOtc);
+        renderTA(code);
         renderNews(code, s[F.name], isOtc);
 
         try {
@@ -186,8 +187,18 @@
 
     // range 代碼 → 往回推的月數
     var RANGE_MONTHS = { "3mo": 3, "6mo": 6, "1y": 12, "3y": 36 };
+    var candleCache = {};   // code|range → 資料（技術分析與線圖共用，切換區間不重抓）
 
     function fetchCandles(code, range) {
+        var key = code + "|" + range;
+        if (candleCache[key]) return Promise.resolve(candleCache[key]);
+        return fetchCandlesRemote(code, range).then(function (data) {
+            candleCache[key] = data;
+            return data;
+        });
+    }
+
+    function fetchCandlesRemote(code, range) {
         var d = new Date();
         d.setMonth(d.getMonth() - (RANGE_MONTHS[range] || 6));
         var start = d.toISOString().slice(0, 10);
@@ -284,6 +295,241 @@
             group.querySelectorAll(".btn").forEach(function (b) { b.classList.remove("active"); });
             btn.classList.add("active");
             renderChart(currentCode, DB.stocks[currentCode][F.market] === "otc");
+        });
+    }
+
+    /* ---------- 技術分析結論 ---------- */
+
+    function sma(vals, n, endIdx) {
+        if (endIdx === undefined) endIdx = vals.length - 1;
+        if (endIdx + 1 < n) return null;
+        var sum = 0;
+        for (var i = endIdx - n + 1; i <= endIdx; i++) sum += vals[i];
+        return sum / n;
+    }
+
+    function emaSeries(vals, n) {
+        var k = 2 / (n + 1), out = [], prev;
+        for (var i = 0; i < vals.length; i++) {
+            prev = (i === 0) ? vals[0] : vals[i] * k + prev * (1 - k);
+            out.push(prev);
+        }
+        return out;
+    }
+
+    function calcRSI(closes, n) {
+        if (closes.length < n + 1) return null;
+        var avgG = 0, avgL = 0, i, diff;
+        for (i = 1; i <= n; i++) {
+            diff = closes[i] - closes[i - 1];
+            if (diff > 0) avgG += diff; else avgL -= diff;
+        }
+        avgG /= n; avgL /= n;
+        for (i = n + 1; i < closes.length; i++) {
+            diff = closes[i] - closes[i - 1];
+            avgG = (avgG * (n - 1) + Math.max(diff, 0)) / n;
+            avgL = (avgL * (n - 1) + Math.max(-diff, 0)) / n;
+        }
+        if (avgL === 0) return 100;
+        return 100 - 100 / (1 + avgG / avgL);
+    }
+
+    function calcKD(candles) {
+        if (candles.length < 9) return null;
+        var K = 50, D = 50;
+        for (var i = 8; i < candles.length; i++) {
+            var hi = -Infinity, lo = Infinity;
+            for (var j = i - 8; j <= i; j++) {
+                if (candles[j].high > hi) hi = candles[j].high;
+                if (candles[j].low < lo) lo = candles[j].low;
+            }
+            var rsv = (hi === lo) ? 50 : (candles[i].close - lo) / (hi - lo) * 100;
+            K = K * 2 / 3 + rsv / 3;
+            D = D * 2 / 3 + K / 3;
+        }
+        return { k: K, d: D };
+    }
+
+    function stddev(vals, n) {
+        var m = sma(vals, n);
+        if (m === null) return null;
+        var s = 0;
+        for (var i = vals.length - n; i < vals.length; i++) s += (vals[i] - m) * (vals[i] - m);
+        return Math.sqrt(s / n);
+    }
+
+    // 每列：{name, value, judge, score(-1/0/1), cls}
+    function computeTA(candles) {
+        var rows = [];
+        var closes = candles.map(function (c) { return c.close; });
+        var n = closes.length;
+        var last = closes[n - 1];
+        var prevClose = n > 1 ? closes[n - 2] : last;
+        var priceUp = last >= prevClose;
+
+        function row(name, value, judge, score) {
+            rows.push({ name: name, value: value, judge: judge, score: score,
+                        cls: score > 0 ? "ta-bull" : (score < 0 ? "ta-bear" : "ta-flat") });
+        }
+
+        // 1. 均線排列
+        var ma5 = sma(closes, 5), ma20 = sma(closes, 20), ma60 = sma(closes, 60);
+        if (ma5 !== null && ma20 !== null && ma60 !== null) {
+            var v = "MA5 " + fmt(ma5, 2) + "｜MA20 " + fmt(ma20, 2) + "｜MA60 " + fmt(ma60, 2);
+            if (ma5 > ma20 && ma20 > ma60) row("均線排列", v, "多頭排列（短中長期均線向上）", 1);
+            else if (ma5 < ma20 && ma20 < ma60) row("均線排列", v, "空頭排列（短中長期均線向下）", -1);
+            else row("均線排列", v, "均線糾結，方向未明", 0);
+        } else {
+            row("均線排列", "資料不足", "上市時間較短，無法計算 60 日均線", 0);
+        }
+
+        // 2. 月線（MA20）位置
+        if (ma20 !== null) {
+            row("月線位置", "收盤 " + fmt(last, 2) + " vs MA20 " + fmt(ma20, 2),
+                last >= ma20 ? "站上月線，短波段偏多" : "跌破月線，短波段偏空",
+                last >= ma20 ? 1 : -1);
+        }
+
+        // 3. KD
+        var kd = calcKD(candles);
+        if (kd) {
+            var kdNote = kd.k > kd.d ? "K 在 D 之上（偏多）" : "K 在 D 之下（偏空）";
+            if (kd.k >= 80) kdNote += "，高檔過熱留意鈍化";
+            else if (kd.k <= 20) kdNote += "，低檔超賣留意反彈";
+            row("KD（9,3,3）", "K " + fmt(kd.k, 1) + "／D " + fmt(kd.d, 1), kdNote, kd.k > kd.d ? 1 : -1);
+        }
+
+        // 4. RSI
+        var rsi = calcRSI(closes, 14);
+        if (rsi !== null) {
+            var rsiNote = rsi >= 50 ? "位於 50 之上（偏多）" : "位於 50 之下（偏空）";
+            if (rsi >= 70) rsiNote += "，已達過熱區";
+            else if (rsi <= 30) rsiNote += "，已達超賣區";
+            row("RSI（14）", fmt(rsi, 1), rsiNote, rsi >= 50 ? 1 : -1);
+        }
+
+        // 5. MACD
+        if (n >= 35) {
+            var e12 = emaSeries(closes, 12), e26 = emaSeries(closes, 26);
+            var dif = closes.map(function (_, i) { return e12[i] - e26[i]; });
+            var sig = emaSeries(dif, 9);
+            var difV = dif[n - 1], sigV = sig[n - 1], osc = difV - sigV;
+            var macdNote = (difV > sigV ? "DIF 在訊號線上（偏多）" : "DIF 在訊號線下（偏空）") +
+                (difV >= 0 ? "，零軸之上多方主導" : "，零軸之下空方主導");
+            row("MACD（12,26,9）",
+                "DIF " + fmt(difV, 2) + "／訊號 " + fmt(sigV, 2) + "／柱 " + signed(osc, 2),
+                macdNote, difV > sigV ? 1 : -1);
+        }
+
+        // 6. 布林通道
+        var sd = stddev(closes, 20);
+        if (ma20 !== null && sd !== null) {
+            var upper = ma20 + 2 * sd, lower = ma20 - 2 * sd;
+            var pos = (upper === lower) ? 50 : (last - lower) / (upper - lower) * 100;
+            var bbNote;
+            if (pos > 100) bbNote = "突破上緣，強勢但過熱";
+            else if (pos >= 50) bbNote = "位於中軌之上（偏多）";
+            else if (pos >= 0) bbNote = "位於中軌之下（偏空）";
+            else bbNote = "跌破下緣，弱勢但超跌";
+            row("布林通道（20,2）",
+                fmt(lower, 2) + " ～ " + fmt(upper, 2) + "，價格位於 " + fmt(pos, 0) + "%",
+                bbNote, pos >= 50 ? 1 : -1);
+        }
+
+        // 7. 20 日乖離率（過熱/超跌警示，不計分）
+        if (ma20 !== null) {
+            var bias = (last - ma20) / ma20 * 100;
+            var biasNote;
+            if (bias >= 8) biasNote = "正乖離過大，短線留意回檔";
+            else if (bias <= -8) biasNote = "負乖離過大，短線可能反彈";
+            else biasNote = "乖離正常範圍（±8% 內）";
+            row("20 日乖離率", signed(bias, 2) + "%", biasNote, 0);
+        }
+
+        // 8. 量能（價量配合）
+        if (n >= 7) {
+            var vols = candles.map(function (c) { return c.volume; });
+            var avg5 = 0;
+            for (var i = n - 6; i <= n - 2; i++) avg5 += vols[i];
+            avg5 /= 5;
+            var vRatio = avg5 ? vols[n - 1] / avg5 : 1;
+            var vLabel = vRatio >= 1.5 ? "爆量" : (vRatio >= 1.1 ? "量增" : (vRatio <= 0.7 ? "量縮" : "量平"));
+            var vScore = 0, vNote;
+            if (vRatio >= 1.1 && priceUp) { vScore = 1; vNote = vLabel + "上漲，價量配合偏多"; }
+            else if (vRatio >= 1.1 && !priceUp) { vScore = -1; vNote = vLabel + "下跌，賣壓沉重偏空"; }
+            else if (vRatio <= 0.7 && !priceUp) { vNote = "量縮下跌，觀望氣氛濃"; }
+            else if (vRatio <= 0.7 && priceUp) { vNote = "量縮上漲，追價意願不足"; }
+            else { vNote = "量能持平，無明顯訊號"; }
+            row("量能", "今日量為 5 日均量的 " + fmt(vRatio * 100, 0) + "%", vNote, vScore);
+        }
+
+        // 9. 一年高低點位置（參考，不計分）
+        var hi52 = -Infinity, lo52 = Infinity;
+        for (var h = 0; h < candles.length; h++) {
+            if (candles[h].high > hi52) hi52 = candles[h].high;
+            if (candles[h].low < lo52) lo52 = candles[h].low;
+        }
+        if (isFinite(hi52) && isFinite(lo52)) {
+            row("一年區間位置",
+                "高 " + fmt(hi52, 2) + "／低 " + fmt(lo52, 2),
+                "距高點 " + fmt((last - hi52) / hi52 * 100, 1) + "%，距低點 +" +
+                fmt((last - lo52) / lo52 * 100, 1) + "%", 0);
+        }
+
+        return rows;
+    }
+
+    function taVerdict(rows) {
+        var bull = 0, bear = 0, scored = 0;
+        rows.forEach(function (r) {
+            if (r.score > 0) bull++;
+            else if (r.score < 0) bear++;
+            if (r.name !== "20 日乖離率" && r.name !== "一年區間位置") scored++;
+        });
+        var s = bull - bear;
+        var label, cls;
+        if (s >= 4) { label = "強勢偏多"; cls = "ta-bull"; }
+        else if (s >= 2) { label = "偏多"; cls = "ta-bull"; }
+        else if (s <= -4) { label = "弱勢偏空"; cls = "ta-bear"; }
+        else if (s <= -2) { label = "偏空"; cls = "ta-bear"; }
+        else { label = "中性"; cls = "ta-flat"; }
+        return { label: label, cls: cls, bull: bull, bear: bear, total: scored };
+    }
+
+    function renderTA(code) {
+        var tbody = document.querySelector("#taTable tbody");
+        var verdictEl = document.getElementById("taVerdict");
+        tbody.innerHTML = '<tr><td colspan="3" class="text-muted text-center">技術指標計算中…</td></tr>';
+        verdictEl.style.display = "none";
+
+        var myCode = code;
+        fetchCandles(code, "1y").then(function (data) {
+            if (currentCode !== myCode) return;
+            if (!data.candles || data.candles.length < 10) throw new Error("insufficient");
+            // 補上成交量（computeTA 用）
+            var candles = data.candles.map(function (c, i) {
+                return { close: c.close, high: c.high, low: c.low, volume: data.volumes[i] ? data.volumes[i].value : 0 };
+            });
+            var rows = computeTA(candles);
+            var v = taVerdict(rows);
+
+            verdictEl.innerHTML =
+                '<span class="ta-verdict-badge ' + v.cls + '">' + v.label + "</span>" +
+                '<span class="ta-verdict-text">計分指標 ' + v.total + " 項中：" +
+                '<span class="val-up">' + v.bull + " 項偏多</span>、" +
+                '<span class="val-down">' + v.bear + " 項偏空</span>（依最新日線收盤計算）</span>";
+            verdictEl.style.display = "flex";
+
+            tbody.innerHTML = rows.map(function (r) {
+                return "<tr><td class='text-left font-weight-bold'>" + esc(r.name) + "</td>" +
+                    "<td class='text-left'>" + r.value + "</td>" +
+                    "<td class='text-left'><span class='ta-badge " + r.cls + "'>" +
+                    (r.score > 0 ? "偏多" : (r.score < 0 ? "偏空" : "參考")) + "</span> " +
+                    esc(r.judge) + "</td></tr>";
+            }).join("");
+        }).catch(function () {
+            if (currentCode !== myCode) return;
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted text-center">技術指標資料暫時無法取得，請稍後再試。</td></tr>';
         });
     }
 
