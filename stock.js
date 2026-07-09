@@ -1,4 +1,4 @@
-/* 個股查詢頁：讀取 data/stocks.json（每日更新），渲染盤後資訊 + TradingView 線圖 + 新聞 */
+/* 個股查詢頁：讀取 data/stocks.json（每日更新），渲染盤後資訊 + 技術線圖 + 新聞連結 */
 (function () {
     "use strict";
 
@@ -533,9 +533,10 @@
         });
     }
 
-    /* ---------- 新聞（Google News RSS，經 CORS 代理） ---------- */
+    /* ---------- 新聞（僅提供外部網站連結；不內嵌第三方新聞內容，
+       Google News RSS 僅授權非商業使用，本站有廣告屬商業用途） ---------- */
 
-    function newsFallbackLinks(code, name, isOtc) {
+    function newsLinks(code, name, isOtc) {
         var yahooSuffix = isOtc ? ".TWO" : ".TW";
         return '<a class="btn btn-success btn-sm mr-2 mb-2" target="_blank" rel="noopener" href="https://news.google.com/search?q=' +
             encodeURIComponent(name) + '&hl=zh-TW&gl=TW&ceid=TW:zh-Hant">Google 新聞</a>' +
@@ -545,85 +546,10 @@
             encodeURIComponent(name) + '">鉅亨網</a>';
     }
 
-    function timeAgo(dateStr) {
-        var t = new Date(dateStr).getTime();
-        if (isNaN(t)) return "";
-        var mins = Math.round((Date.now() - t) / 60000);
-        if (mins < 60) return mins + " 分鐘前";
-        var hrs = Math.round(mins / 60);
-        if (hrs < 24) return hrs + " 小時前";
-        return Math.round(hrs / 24) + " 天前";
-    }
-
-    function newsItemHtml(title, link, src, pub) {
-        // Google News 標題格式「標題 - 媒體名」，沒有 source 欄位時從標題拆
-        if (!src) {
-            var m = title.match(/^(.*)\s-\s([^-]+)$/);
-            if (m) { title = m[1]; src = m[2]; }
-        }
-        return '<a class="news-item" target="_blank" rel="noopener" href="' + esc(link) + '">' +
-            '<span class="news-title">' + esc(title) + "</span>" +
-            '<span class="news-meta">' + esc(src || "") + (pub ? "・" + timeAgo(pub) : "") + "</span></a>";
-    }
-
     function renderNews(code, name, isOtc) {
-        var box = document.getElementById("stockNews");
-        var links = document.getElementById("stockNewsLinks");
-        box.innerHTML = '<p class="text-muted">新聞載入中…</p>';
-        links.innerHTML = newsFallbackLinks(code, name, isOtc);
-
-        var myCode = code;
-        var rss = "https://news.google.com/rss/search?q=" + encodeURIComponent('"' + name + '"') +
-            "&hl=zh-TW&gl=TW&ceid=TW:zh-Hant";
-
-        var timer = setTimeout(function () {
-            if (currentCode === myCode) {
-                box.innerHTML = '<p class="text-muted">新聞載入逾時，請改用下方連結查看。</p>';
-            }
-        }, 20000);
-
-        function done(html) {
-            clearTimeout(timer);
-            if (currentCode === myCode) box.innerHTML = html;
-        }
-
-        // 主要來源：rss2json（快、回 JSON）；備援：allorigins（回原始 XML）
-        fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rss))
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (!d || d.status !== "ok" || !d.items || !d.items.length) throw new Error("rss2json empty");
-                return d.items.slice(0, 8).map(function (it) {
-                    return newsItemHtml(it.title || "", it.link || "#", it.author || "", it.pubDate || "");
-                }).join("");
-            })
-            .catch(function () {
-                return fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(rss))
-                    .then(function (r) {
-                        if (!r.ok) throw new Error("HTTP " + r.status);
-                        return r.text();
-                    })
-                    .then(function (xml) {
-                        var doc = new DOMParser().parseFromString(xml, "text/xml");
-                        var items = doc.querySelectorAll("item");
-                        if (!items.length) throw new Error("no items");
-                        var html = "";
-                        for (var i = 0; i < Math.min(items.length, 8); i++) {
-                            var it = items[i];
-                            var srcEl = it.getElementsByTagName("source")[0];
-                            html += newsItemHtml(
-                                (it.querySelector("title") || {}).textContent || "",
-                                (it.querySelector("link") || {}).textContent || "#",
-                                srcEl ? srcEl.textContent : "",
-                                (it.querySelector("pubDate") || {}).textContent || ""
-                            );
-                        }
-                        return html;
-                    });
-            })
-            .then(done)
-            .catch(function () {
-                done('<p class="text-muted">新聞來源暫時無法連線，請改用下方連結查看。</p>');
-            });
+        document.getElementById("stockNews").innerHTML =
+            '<p class="text-muted mb-0">點選下方按鈕，前往各新聞網站查看「' + esc(name) + '」的最新報導（另開新視窗）。</p>';
+        document.getElementById("stockNewsLinks").innerHTML = newsLinks(code, name, isOtc);
     }
 
     /* ---------- 初始化 ---------- */

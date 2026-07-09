@@ -2,9 +2,12 @@ name: Update market data
 
 on:
   schedule:
-    # 台股收盤後抓取（台北時間 16:30 與 19:30 各一次，UTC+8）
-    - cron: "30 8 * * 1-5"
-    - cron: "30 11 * * 1-5"
+    # TWSE OpenAPI 於收盤當晚至次日清晨間更新，多排幾個時段重試；
+    # 腳本內建資料日期一致性檢查，來源尚未更新時會自動放棄、不產生錯誤資料。
+    # 台北時間（UTC+8）：22:00、隔日 05:30、隔日 06:30
+    - cron: "0 14 * * 1-5"
+    - cron: "30 21 * * 1-5"
+    - cron: "30 22 * * 1-5"
   workflow_dispatch:
 
 permissions:

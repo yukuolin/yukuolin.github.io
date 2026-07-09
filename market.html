@@ -213,7 +213,8 @@
         <!-- 台幣匯率 -->
         <div class="container anchor-section" id="fx">
             <h2 class="mt-0">台幣匯率變化</h2>
-            <p class="text-muted small mb-2">國際中間價參考匯率（1 單位外幣兌換新台幣），紅色代表台幣貶值（外幣變貴）、綠色代表台幣升值。</p>
+            <p class="text-muted small mb-2">國際中間價參考匯率（1 單位外幣兌換新台幣），紅色代表台幣貶值（外幣變貴）、綠色代表台幣升值。匯率資料：<a
+                    href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>。</p>
             <div class="table-responsive">
                 <table class="table table-bordered results-table mb-0" id="fxTable" style="text-align:center;">
                     <thead class="thead-custom">
@@ -259,7 +260,11 @@
 
         <h2>資料來源與更新頻率</h2>
         <p class="mb-0">
-            台股資料來源為<a href="https://www.twse.com.tw/" target="_blank" rel="noopener">臺灣證券交易所</a>公開資訊，於每個交易日收盤後自動更新（約 16:30 與 19:30 各更新一次）；匯率為國際市場中間價參考值，非銀行牌告價。資料可能延遲或因來源異動而中斷，投資前請以官方公告為準。
+            台股資料來源為<a href="https://www.twse.com.tw/" target="_blank" rel="noopener">臺灣證券交易所</a>與<a
+                href="https://www.tpex.org.tw/" target="_blank" rel="noopener">證券櫃檯買賣中心</a>之 OpenAPI
+            開放資料，於每個交易日盤後（官方開放資料發布後，最晚隔日清晨）自動更新；匯率為國際市場中間價參考值（資料由 <a
+                href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Exchange Rate API</a>
+            提供），非銀行牌告價。資料可能延遲或因來源異動而中斷，投資前請以官方公告為準。
         </p>
     </div>
 
