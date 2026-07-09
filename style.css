@@ -62,6 +62,52 @@ body {
     background-color: rgba(255, 255, 255, 0.10);
 }
 
+/* ---------- 導覽列下拉選單（市場焦點快速連結） ---------- */
+html {
+    scroll-behavior: smooth;
+}
+
+.navbar .dropdown-menu.market-menu {
+    background: linear-gradient(160deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 0.4rem 0;
+    margin-top: 0;
+    min-width: 13rem;
+}
+
+.navbar .market-menu .dropdown-item {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    font-size: 0.92rem;
+    padding: 0.5rem 1.1rem;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.navbar .market-menu .dropdown-item:hover,
+.navbar .market-menu .dropdown-item:focus {
+    color: var(--primary-dark);
+    background-color: var(--accent);
+}
+
+.navbar .market-menu .dropdown-divider {
+    border-top-color: rgba(255, 255, 255, 0.15);
+    margin: 0.3rem 0;
+}
+
+/* 桌機：滑鼠移過去自動展開，不用點擊 */
+@media (min-width: 992px) {
+    .navbar .nav-item.dropdown:hover > .dropdown-menu {
+        display: block;
+    }
+}
+
+/* 錨點捲動時預留 sticky 導覽列高度 */
+.anchor-section {
+    scroll-margin-top: 76px;
+}
+
 /* ---------- 頁面主標題（hero 區塊） ---------- */
 .hero {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%);

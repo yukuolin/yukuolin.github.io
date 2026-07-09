@@ -197,6 +197,11 @@
             renderHot(m.hotStocks || []);
             renderFx(m.fx || {});
             if (m.fx) refreshFxLive(m.fx);
+            // 資料渲染後版面高度改變，帶錨點進來時重新定位
+            if (location.hash) {
+                var target = document.getElementById(location.hash.slice(1));
+                if (target) target.scrollIntoView();
+            }
         }).catch(function (e) {
             status.textContent = "資料載入失敗，請稍後再試。（" + e.message + "）";
         });

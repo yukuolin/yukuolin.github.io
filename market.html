@@ -74,8 +74,17 @@
                 <li class="nav-item">
                     <a class="nav-link" href="./position.html">部位大小</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="./market.html">市場焦點</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="./market.html" id="marketMenu" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">市場焦點</a>
+                    <div class="dropdown-menu market-menu" aria-labelledby="marketMenu">
+                        <a class="dropdown-item" href="#market-summary">📊 大盤摘要卡</a>
+                        <a class="dropdown-item" href="#institutional">三大法人買賣金額</a>
+                        <a class="dropdown-item" href="#sectors">當日熱門族群</a>
+                        <a class="dropdown-item" href="#ranking">外資／投信買賣超 Top 10</a>
+                        <a class="dropdown-item" href="#hot-stocks">成交量前二十熱門股</a>
+                        <a class="dropdown-item" href="#fx">台幣匯率變化</a>
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="./freshmen.html">新手投資建議</a>
@@ -98,7 +107,7 @@
 
     <div id="page-content-wrapper">
         <!-- 讀取狀態 / 資料日期 -->
-        <div class="container">
+        <div class="container anchor-section" id="market-summary">
             <div id="marketStatus" class="market-status text-center text-muted">資料載入中…</div>
 
             <!-- 大盤摘要卡 -->
@@ -106,7 +115,7 @@
         </div>
 
         <!-- 三大法人 -->
-        <div class="container">
+        <div class="container anchor-section" id="institutional">
             <h2 class="mt-0">三大法人買賣金額統計</h2>
             <p class="text-muted small mb-2">單位：億元。買賣差額為正代表法人買超（紅），為負代表賣超（綠）。</p>
             <div class="table-responsive">
@@ -125,7 +134,7 @@
         </div>
 
         <!-- 熱門族群 -->
-        <div class="container">
+        <div class="container anchor-section" id="sectors">
             <h2 class="mt-0">當日熱門族群（類股指數漲跌排行）</h2>
             <p class="text-muted small mb-2">以臺灣證券交易所各類股指數當日漲跌幅排序，觀察資金流向哪些族群。</p>
             <div class="row">
@@ -141,7 +150,7 @@
         </div>
 
         <!-- 外資 / 投信買賣超 -->
-        <div class="container">
+        <div class="container anchor-section" id="ranking">
             <h2 class="mt-0">外資與投信買賣超排行</h2>
             <p class="text-muted small mb-2">單位：張（千股）。含 ETF；資料為集中市場（上市）個股。</p>
             <div class="row">
@@ -176,7 +185,7 @@
         </div>
 
         <!-- 熱門股 -->
-        <div class="container">
+        <div class="container anchor-section" id="hot-stocks">
             <h2 class="mt-0">當日成交量前二十名熱門股</h2>
             <p class="text-muted small mb-2">依成交股數排行，為當日市場人氣指標。單位：張。</p>
             <div class="table-responsive">
@@ -199,7 +208,7 @@
         </div>
 
         <!-- 台幣匯率 -->
-        <div class="container">
+        <div class="container anchor-section" id="fx">
             <h2 class="mt-0">台幣匯率變化</h2>
             <p class="text-muted small mb-2">國際中間價參考匯率（1 單位外幣兌換新台幣），紅色代表台幣貶值（外幣變貴）、綠色代表台幣升值。</p>
             <div class="table-responsive">
