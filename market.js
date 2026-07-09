@@ -42,6 +42,11 @@
         return yyyymmdd.slice(0, 4) + "/" + yyyymmdd.slice(4, 6) + "/" + yyyymmdd.slice(6, 8);
     }
 
+    // 代號連到個股查詢頁
+    function stockLink(code) {
+        return '<a class="code-link" href="./stock.html?code=' + encodeURIComponent(code) + '">' + esc(code) + "</a>";
+    }
+
     function findInst(rows, keyword) {
         for (var i = 0; i < rows.length; i++) {
             if (rows[i].name.indexOf(keyword) === 0) return rows[i];
@@ -112,7 +117,7 @@
             return;
         }
         tbody.innerHTML = rows.map(function (r) {
-            return "<tr><td>" + esc(r.code) + "</td><td class='text-left'>" + esc(r.name) + "</td>" +
+            return "<tr><td>" + stockLink(r.code) + "</td><td class='text-left'>" + esc(r.name) + "</td>" +
                 '<td class="text-right ' + cls + '">' + fmt(Math.abs(r.net) / 1000, 0) + "</td></tr>";
         }).join("");
     }
@@ -121,7 +126,7 @@
         var tbody = document.querySelector("#hotTable tbody");
         tbody.innerHTML = stocks.map(function (s) {
             var cls = colorClass(s.change);
-            return "<tr><td>" + s.rank + "</td><td>" + esc(s.code) + "</td><td>" + esc(s.name) + "</td>" +
+            return "<tr><td>" + s.rank + "</td><td>" + stockLink(s.code) + "</td><td>" + esc(s.name) + "</td>" +
                 "<td>" + fmt(s.close, 2) + "</td>" +
                 '<td class="' + cls + '">' + signed(s.change, 2) + "</td>" +
                 '<td class="' + cls + '">' + signed(s.changePct, 2) + "%</td>" +

@@ -11,6 +11,7 @@
 import json
 import re
 import sys
+import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -22,10 +23,23 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 FX_HISTORY_MAX = 60  # 保留最近 60 筆（約三個月）匯率紀錄
 
 
-def fetch_json(url):
-    req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+def fetch_json(url, retries=2):
+    """抓 JSON。證交所 rwd 有 5 秒 5 次的流量限制，每次請求後強制間隔。"""
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=HEADERS)
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            if "twse.com.tw" in url:
+                time.sleep(3)
+            # rwd 被限流時會回 stat 非 OK 或空資料
+            if isinstance(data, dict) and data.get("stat") not in (None, "OK"):
+                raise ValueError(f"stat={data.get('stat')}")
+            return data
+        except Exception:
+            if attempt == retries:
+                raise
+            time.sleep(5 * (attempt + 1))
 
 
 def num(s):
@@ -107,10 +121,10 @@ def get_hot_stocks():
 
 
 def get_t86(date_str):
-    """三大法人買賣超日報（個股，單位：股）→ 外資買/賣超與投信買超排行。"""
+    """三大法人買賣超日報（個股，單位：股）→ 排行榜與個股查詢用的對照表。"""
     d = fetch_json(f"{TWSE}/fund/T86?response=json&date={date_str}&selectType=ALL")
     if d.get("stat") != "OK":
-        return [], [], []
+        return [], [], [], {}
     fields = d["fields"]
 
     def find_field(*keywords, exclude=()):
@@ -124,14 +138,19 @@ def get_t86(date_str):
     # 歷年欄位名稱有「外資買賣超股數」與「外陸資買賣超股數(不含外資自營商)」兩種寫法
     i_foreign = find_field("資買賣超股數", exclude=("自營商買賣超", "投信"))
     i_trust = find_field("投信買賣超股數")
+    i_dealer = find_field("自營商買賣超股數", exclude=("自行", "避險", "外資"))
     rows = []
+    inst_map = {}
     for r in d["data"]:
-        rows.append({
+        row = {
             "code": r[i_code].strip(),
             "name": r[i_name].strip(),
             "foreign": num(r[i_foreign]) or 0,
             "trust": num(r[i_trust]) or 0,
-        })
+            "dealer": num(r[i_dealer]) or 0,
+        }
+        rows.append(row)
+        inst_map[row["code"]] = (row["foreign"], row["trust"], row["dealer"])
 
     def top(key, reverse, n=10):
         ranked = sorted(rows, key=lambda x: x[key], reverse=reverse)[:n]
@@ -141,7 +160,74 @@ def get_t86(date_str):
             if (x[key] > 0) == reverse and x[key] != 0
         ]
 
-    return top("foreign", True), top("foreign", False), top("trust", True)
+    return top("foreign", True), top("foreign", False), top("trust", True), inst_map
+
+
+def build_stocks(inst_map):
+    """整理全部上市＋上櫃個股盤後資料，供個股查詢頁使用。
+
+    每檔格式：[名稱, 市場, 收盤, 漲跌, 開盤, 最高, 最低, 成交股數, 成交筆數,
+               成交金額, 本益比, 股價淨值比, 殖利率(%), 外資買賣超股, 投信買賣超股, 自營商買賣超股]
+    """
+    stocks = {}
+
+    # 上市：每日收盤行情（含本益比與漲跌符號）
+    d = fetch_json(f"{TWSE}/afterTrading/MI_INDEX?response=json&type=ALLBUT0999")
+    quote_table = next(t for t in d["tables"] if "每日收盤行情" in t.get("title", ""))
+    date = d.get("date")
+    for r in quote_table["data"]:
+        code = r[0].strip()
+        close = num(r[8])
+        sign = parse_sign(r[9])
+        change = (num(r[10]) or 0) * sign
+        inst = inst_map.get(code, (None, None, None))
+        stocks[code] = [
+            r[1].strip(), "tse", close, change,
+            num(r[5]), num(r[6]), num(r[7]),
+            num(r[2]), num(r[3]), num(r[4]),
+            num(r[15]), None, None,
+            inst[0], inst[1], inst[2],
+        ]
+
+    # 上市：殖利率與股價淨值比
+    try:
+        d = fetch_json(f"{TWSE}/afterTrading/BWIBBU_d?response=json&selectType=ALL")
+        fields = d["fields"]
+        i_yield = fields.index("殖利率(%)")
+        i_pb = fields.index("股價淨值比")
+        for r in d["data"]:
+            code = r[0].strip()
+            if code in stocks:
+                stocks[code][12] = num(r[i_yield])
+                stocks[code][11] = num(r[i_pb])
+    except Exception as e:
+        print(f"BWIBBU_d fetch failed: {e}", file=sys.stderr)
+
+    # 上櫃：每日收盤 + 本益比/淨值比/殖利率（過濾權證，只留個股/特別股/ETF/ETN）
+    code_ok = re.compile(r"^\d{4}[A-Z]?$|^0[02]\d{2,4}[A-Z]?$")
+    try:
+        rows = fetch_json("https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes")
+        for r in rows:
+            code = r["SecuritiesCompanyCode"].strip()
+            if not code_ok.match(code):
+                continue
+            stocks.setdefault(code, [
+                r["CompanyName"].strip(), "otc", num(r["Close"]), num(r["Change"]),
+                num(r["Open"]), num(r["High"]), num(r["Low"]),
+                num(r["TradingShares"]), num(r["TransactionNumber"]), num(r["TransactionAmount"]),
+                None, None, None, None, None, None,
+            ])
+        rows = fetch_json("https://www.tpex.org.tw/openapi/v1/tpex_mainboard_peratio_analysis")
+        for r in rows:
+            code = r["SecuritiesCompanyCode"].strip()
+            if code in stocks and stocks[code][1] == "otc":
+                stocks[code][10] = num(r["PriceEarningRatio"])
+                stocks[code][11] = num(r["PriceBookRatio"])
+                stocks[code][12] = num(r["YieldRatio"])
+    except Exception as e:
+        print(f"TPEX fetch failed: {e}", file=sys.stderr)
+
+    return date, stocks
 
 
 def get_fx(history):
@@ -171,7 +257,7 @@ def main():
     idx_date, taiex, sectors = get_indices()
     inst_date, institutional = get_institutional()
     hot_date, hot_stocks = get_hot_stocks()
-    foreign_buy, foreign_sell, trust_buy = get_t86(inst_date)
+    foreign_buy, foreign_sell, trust_buy, inst_map = get_t86(inst_date)
 
     fx_path = DATA_DIR / "fx_history.json"
     try:
@@ -203,8 +289,19 @@ def main():
     fx_path.write_text(
         json.dumps(fx_history, ensure_ascii=False, indent=1), encoding="utf-8"
     )
+
+    stocks_date, stocks = build_stocks(inst_map)
+    (DATA_DIR / "stocks.json").write_text(
+        json.dumps(
+            {"date": stocks_date, "updatedAt": market["updatedAt"], "stocks": stocks},
+            ensure_ascii=False, separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
+
     print(f"OK dataDate={market['dataDate']} sectors={len(sectors)} "
-          f"hot={len(hot_stocks)} fBuy={len(foreign_buy)} fSell={len(foreign_sell)}")
+          f"hot={len(hot_stocks)} fBuy={len(foreign_buy)} fSell={len(foreign_sell)} "
+          f"stocks={len(stocks)}")
 
 
 if __name__ == "__main__":
