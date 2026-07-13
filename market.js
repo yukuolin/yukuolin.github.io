@@ -135,6 +135,129 @@
         }).join("");
     }
 
+    /* ---------- 籌碼乾淨度 ---------- */
+
+    // 融資增減對照大盤漲跌的簡易判讀（僅供參考的經驗法則）
+    function chipVerdict(idxPct, finChg, finChgPct) {
+        if (idxPct === null || idxPct === undefined || finChg === null) return null;
+        if (idxPct > 0 && finChg <= 0) {
+            return { label: "乾淨 ✨", note: "指數上漲、融資反減：上漲不靠散戶槓桿，籌碼安定" };
+        }
+        if (idxPct > 0 && finChgPct <= idxPct) {
+            return { label: "中性偏乾淨 🙂", note: "融資增幅低於指數漲幅，槓桿追價不明顯" };
+        }
+        if (idxPct > 0) {
+            return { label: "偏髒 ⚠️", note: "融資增速超過指數漲幅：散戶追價開槓桿，留意回檔賣壓" };
+        }
+        if (finChg <= 0) {
+            return { label: "降溫中 🧹", note: "指數下跌、融資同步退場：槓桿籌碼正在清洗" };
+        }
+        return { label: "警戒 🚨", note: "指數下跌、融資逆勢增加：留意融資斷頭引發多殺多" };
+    }
+
+    function renderChips(chips, taiex, dataDate) {
+        var margin = chips && chips.margin;
+        var fut = (chips && chips.futures) || {};
+        var history = (chips && chips.history) || [];
+        var el = document.getElementById("chipSummary");
+        var cards = [];
+
+        if (margin && margin.finValue !== null) {
+            var finChg = margin.finValuePrev ? margin.finValue - margin.finValuePrev : null;   // 仟元
+            var finChgPct = margin.finValuePrev ? finChg / margin.finValuePrev * 100 : null;
+            var verdict = chipVerdict(taiex ? taiex.changePct : null, finChg, finChgPct);
+            if (verdict) {
+                cards.push({ label: "籌碼乾淨度判讀", value: verdict.label, note: verdict.note, cls: "" });
+            }
+            cards.push({
+                label: "融資餘額（散戶槓桿水位）",
+                value: fmt(margin.finValue / 1e5, 0) + " 億",
+                note: finChg === null ? "—" : "較前日 " + signed(finChg / 1e5, 1) + " 億（" + signed(finChgPct, 2) + "%）",
+                cls: colorClass(finChg)
+            });
+            var shortChg = margin.shortUnitsPrev !== null && margin.shortUnits !== null
+                ? margin.shortUnits - margin.shortUnitsPrev : null;
+            cards.push({
+                label: "融券餘額（借券放空）",
+                value: fmt(margin.shortUnits, 0) + " 張",
+                note: shortChg === null ? "—" : "較前日 " + signed(shortChg, 0) + " 張",
+                cls: colorClass(shortChg)
+            });
+        }
+
+        // 外資台指期（大台）淨未平倉
+        var rows = fut.rows || [];
+        var fBig = null;
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].contract === "臺股期貨" && rows[i].item.indexOf("外資") === 0) { fBig = rows[i]; break; }
+        }
+        if (fBig) {
+            cards.push({
+                label: "外資台指期淨未平倉",
+                value: signed(fBig.netOI, 0) + " 口",
+                note: "做多 " + fmt(fBig.longOI, 0) + " 口／做空 " + fmt(fBig.shortOI, 0) + " 口",
+                cls: colorClass(fBig.netOI)
+            });
+        }
+
+        if (cards.length) {
+            el.innerHTML = cards.map(function (c) {
+                return '<div class="summary-item"><span class="summary-label">' + esc(c.label) +
+                    '</span><span class="summary-value ' + c.cls + '">' + esc(c.value) +
+                    '</span><span class="summary-note">' + esc(c.note) + "</span></div>";
+            }).join("");
+            el.style.display = "flex";
+        }
+
+        // 融資餘額近期趨勢（5 / 20 日增減，資料不足就顯示可用區間）
+        var noteEl = document.getElementById("chipTrendNote");
+        if (noteEl && history.length > 1) {
+            var last = history[history.length - 1];
+            var parts = [];
+            [[5, "近 5 日"], [20, "近 20 日"]].forEach(function (p) {
+                if (history.length > p[0]) {
+                    var base = history[history.length - 1 - p[0]];
+                    parts.push(p[1] + "融資 " + signed((last.fin - base.fin) / 1e5, 1) + " 億");
+                }
+            });
+            var vals = history.map(function (h) { return h.fin / 1e5; });
+            parts.push("近 " + history.length + " 個交易日區間 " +
+                fmt(Math.min.apply(null, vals), 0) + " ～ " + fmt(Math.max.apply(null, vals), 0) + " 億");
+            noteEl.textContent = "融資餘額趨勢：" + parts.join("；") + "。";
+        }
+
+        // 期貨未平倉表
+        var tbody = document.querySelector("#futOiTable tbody");
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">尚無期貨部位資料</td></tr>';
+            return;
+        }
+        var CONTRACT_ORDER = ["臺股期貨", "小型臺指期貨", "微型臺指期貨"];
+        var ITEM_ORDER = ["外資及陸資", "外資", "投信", "自營商"];
+        rows = rows.slice().sort(function (a, b) {
+            var c = CONTRACT_ORDER.indexOf(a.contract) - CONTRACT_ORDER.indexOf(b.contract);
+            return c !== 0 ? c : ITEM_ORDER.indexOf(a.item) - ITEM_ORDER.indexOf(b.item);
+        });
+        var prevContract = null;
+        tbody.innerHTML = rows.map(function (r) {
+            var first = r.contract !== prevContract;
+            prevContract = r.contract;
+            var isForeign = r.item.indexOf("外資") === 0;
+            return "<tr" + (isForeign ? ' class="highlight"' : "") + ">" +
+                "<td class='text-left'>" + (first ? esc(r.contract) : "") + "</td>" +
+                "<td>" + esc(r.item) + "</td>" +
+                "<td>" + fmt(r.longOI, 0) + "</td>" +
+                "<td>" + fmt(r.shortOI, 0) + "</td>" +
+                '<td class="' + colorClass(r.netOI) + '">' + signed(r.netOI, 0) + "</td>" +
+                '<td class="' + colorClass(r.netTrade) + '">' + signed(r.netTrade, 0) + "</td></tr>";
+        }).join("");
+
+        var futNote = document.getElementById("futNote");
+        if (futNote && fut.date && fut.date !== dataDate) {
+            futNote.textContent = "期貨部位資料日期：" + dateLabel(fut.date) + "（期交所公布時間與證交所不同）。資料來源：臺灣期貨交易所 OpenAPI。";
+        }
+    }
+
     function renderFx(fx) {
         var tbody = document.querySelector("#fxTable tbody");
         var history = (fx && fx.history) || [];
@@ -199,6 +322,7 @@
             renderRank("foreignBuyTable", m.foreignBuy, "val-up");
             renderRank("foreignSellTable", m.foreignSell, "val-down");
             renderRank("trustBuyTable", m.trustBuy, "val-up");
+            renderChips(m.chips || {}, m.taiex, m.dataDate);
             renderHot(m.hotStocks || []);
             renderFx(m.fx || {});
             if (m.fx) refreshFxLive(m.fx);

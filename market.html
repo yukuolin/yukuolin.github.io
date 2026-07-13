@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率</title>
     <meta name="description" content="每日更新台股市場焦點：當日成交量前二十名熱門股票、三大法人買賣金額、外資與投信買賣超排行、強弱勢類股族群、台幣匯率變化。免費查詢，資料來源為臺灣證券交易所。">
-    <meta name="keywords" content="台股, 熱門股票, 成交量排行, 三大法人, 外資買賣超, 投信買賣超, 類股, 熱門族群, 台幣匯率, 美元匯率, 加權指數">
+    <meta name="keywords" content="台股, 熱門股票, 成交量排行, 三大法人, 外資買賣超, 投信買賣超, 籌碼乾淨度, 融資餘額, 外資期貨未平倉, 類股, 熱門族群, 台幣匯率, 美元匯率, 加權指數">
     <meta name="author" content="Yukuo Lin">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://yukuolin.github.io/market.html">
@@ -80,6 +80,7 @@
                     <div class="dropdown-menu market-menu" aria-labelledby="marketMenu">
                         <a class="dropdown-item" href="#market-summary">📊 大盤摘要卡</a>
                         <a class="dropdown-item" href="#institutional">三大法人買賣金額</a>
+                        <a class="dropdown-item" href="#chips">籌碼乾淨度與期貨部位</a>
                         <a class="dropdown-item" href="#sectors">當日熱門族群</a>
                         <a class="dropdown-item" href="#ranking">外資／投信買賣超 Top 10</a>
                         <a class="dropdown-item" href="#hot-stocks">成交量前二十熱門股</a>
@@ -134,6 +135,36 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- 籌碼乾淨度 -->
+        <div class="container anchor-section" id="chips">
+            <h2 class="mt-0">籌碼乾淨度：融資槓桿與期貨法人部位</h2>
+            <p class="text-muted small mb-2">
+                「籌碼乾淨」指市場上以融資開槓桿追價的散戶資金少、浮動籌碼有限，上漲較不易遇到停損賣壓。
+                此處以<strong>融資餘額增減</strong>對照大盤漲跌自動判讀，並列出期貨市場三大法人（外資、投信、自營商）的多空未平倉部位。
+            </p>
+            <div id="chipSummary" class="summary-bar" style="display:none;"></div>
+            <p class="text-muted small mt-2 mb-3" id="chipTrendNote"></p>
+
+            <h3 class="rank-title">台指期貨三大法人未平倉部位</h3>
+            <p class="text-muted small mb-2">單位：口。多空淨額為正代表法人偏多佈局（紅），為負代表偏空（綠）。</p>
+            <div class="table-responsive">
+                <table class="table table-bordered results-table mb-0" id="futOiTable" style="text-align:center;">
+                    <thead class="thead-custom">
+                        <tr>
+                            <th>契約</th>
+                            <th>身份別</th>
+                            <th>多方未平倉(口)</th>
+                            <th>空方未平倉(口)</th>
+                            <th>多空淨額(口)</th>
+                            <th>當日淨交易(口)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p class="text-muted small mt-2 mb-0" id="futNote">期貨部位資料來源：臺灣期貨交易所 OpenAPI。</p>
         </div>
 
         <!-- 熱門族群 -->
@@ -238,6 +269,14 @@
         <p>
             三大法人指外資（外資及陸資）、投信（本國投資信託基金）與自營商（證券自營商）。法人資金規模大、研究資源多，其買賣動向常被視為市場風向球。外資連續買超通常代表國際資金看好台股；投信買超的中小型股則常有波段行情。
         </p>
+        <h3>融資餘額與籌碼乾淨度</h3>
+        <p>
+            融資是向券商借錢買股票，是散戶最常用的槓桿工具，因此<strong>融資餘額</strong>常被視為「散戶槓桿水位」。當大盤上漲但融資餘額反而減少，代表上漲由自有資金或法人推動、籌碼乾淨；反之若融資增速超過指數漲幅，代表散戶正在追價開槓桿，籌碼轉髒，一旦回檔容易引發融資斷頭的多殺多賣壓。融券餘額則是看空的借券放空部位，過高時也可能成為軋空的潛在買盤。
+        </p>
+        <h3>外資期貨未平倉部位</h3>
+        <p>
+            外資除了現貨買賣超，也會在台指期貨佈局避險或投機部位。<strong>未平倉口數</strong>代表尚未沖銷的留倉部位：多方口數大於空方（淨額為正）代表外資期貨偏多，反之偏空。觀察外資現貨與期貨方向是否一致，可以判斷其對後市的真實態度——例如現貨買超但期貨大幅淨空單，可能只是避險而非翻空。
+        </p>
         <h3>成交量排行（熱門股）</h3>
         <p>
             成交量大代表市場關注度高、流動性佳，進出容易，是當沖交易者選股的重要條件之一。搭配<a href="./">當沖計算機</a>試算損益，並用<a href="./position.html">部位大小計算器</a>控制風險，交易更有紀律。
@@ -260,8 +299,9 @@
 
         <h2>資料來源與更新頻率</h2>
         <p class="mb-0">
-            台股資料來源為<a href="https://www.twse.com.tw/" target="_blank" rel="noopener">臺灣證券交易所</a>與<a
-                href="https://www.tpex.org.tw/" target="_blank" rel="noopener">證券櫃檯買賣中心</a>之 OpenAPI
+            台股資料來源為<a href="https://www.twse.com.tw/" target="_blank" rel="noopener">臺灣證券交易所</a>、<a
+                href="https://www.tpex.org.tw/" target="_blank" rel="noopener">證券櫃檯買賣中心</a>與<a
+                href="https://www.taifex.com.tw/" target="_blank" rel="noopener">臺灣期貨交易所</a>之 OpenAPI
             開放資料，於每個交易日盤後（官方開放資料發布後，最晚隔日清晨）自動更新；匯率為國際市場中間價參考值（資料由 <a
                 href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Exchange Rate API</a>
             提供），非銀行牌告價。資料可能延遲或因來源異動而中斷，投資前請以官方公告為準。

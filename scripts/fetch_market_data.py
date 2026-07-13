@@ -4,7 +4,9 @@
 資料來源（商業使用合規優先，盡量採官方 OpenAPI 開放資料）：
 - 臺灣證券交易所 OpenAPI（openapi.twse.com.tw）：大盤/類股指數、成交量前二十、
   個股日成交資訊、本益比/淨值比/殖利率
-- 臺灣證券交易所 rwd JSON（三大法人 BFI82U/T86，OpenAPI 未提供，帶明確日期參數）
+- 臺灣證券交易所 rwd JSON（三大法人 BFI82U/T86、信用交易統計 MI_MARGN，
+  OpenAPI 未提供整體市場數字，帶明確日期參數）
+- 臺灣期貨交易所 OpenAPI（openapi.taifex.com.tw）：三大法人期貨未平倉部位
 - 證券櫃檯買賣中心 OpenAPI（www.tpex.org.tw/openapi）：上櫃行情與本益比
 - open.er-api.com（台幣匯率，中間價參考；頁面須標示 Rates By Exchange Rate API）
 
@@ -24,10 +26,14 @@ from pathlib import Path
 TWSE_OPENAPI = "https://openapi.twse.com.tw/v1"
 TWSE_RWD = "https://www.twse.com.tw/rwd/zh"
 TPEX_OPENAPI = "https://www.tpex.org.tw/openapi/v1"
+TAIFEX_OPENAPI = "https://openapi.taifex.com.tw/v1"
 HEADERS = {"User-Agent": "Mozilla/5.0 (market-data-bot; +https://yukuolin.github.io)"}
 TAIPEI = timezone(timedelta(hours=8))
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 FX_HISTORY_MAX = 60  # 保留最近 60 筆（約三個月）匯率紀錄
+CHIP_HISTORY_MAX = 60  # 保留最近 60 個交易日的籌碼紀錄
+# 籌碼區塊追蹤的台指期貨契約（大台／小台／微台）
+FUT_CONTRACTS = ("臺股期貨", "小型臺指期貨", "微型臺指期貨")
 
 
 def fetch_json(url, retries=2):
@@ -186,6 +192,47 @@ def get_t86(date_str):
     return top("foreign", True), top("foreign", False), top("trust", True), inst_map
 
 
+def get_margin(date_str):
+    """信用交易統計彙總（MI_MARGN，OpenAPI 僅有個股明細，整體市場數字走 rwd 並指定日期）。
+
+    融資金額單位：仟元；融資／融券張數單位：交易單位（張）。
+    """
+    d = fetch_json(f"{TWSE_RWD}/marginTrading/MI_MARGN?response=json&date={date_str}&selectType=MS")
+    margin = {}
+    for row in d["tables"][0]["data"]:
+        item, prev, today = row[0], num(row[4]), num(row[5])
+        if item.startswith("融資金額"):
+            margin["finValue"], margin["finValuePrev"] = today, prev
+        elif item.startswith("融資"):
+            margin["finUnits"], margin["finUnitsPrev"] = today, prev
+        elif item.startswith("融券"):
+            margin["shortUnits"], margin["shortUnitsPrev"] = today, prev
+    if "finValue" not in margin:
+        raise ValueError(f"MI_MARGN 找不到融資金額欄位: {d['tables'][0]['data']}")
+    return margin
+
+
+def get_futures_positions():
+    """期交所三大法人-區分各期貨契約（OpenAPI，僅提供最新交易日）。單位：口。"""
+    rows = fetch_json(
+        f"{TAIFEX_OPENAPI}/MarketDataOfMajorInstitutionalTradersDetailsOfFuturesContractsBytheDate"
+    )
+    date = rows[0].get("Date") if rows else None
+    out = []
+    for r in rows:
+        if r.get("ContractCode") not in FUT_CONTRACTS:
+            continue
+        out.append({
+            "contract": r["ContractCode"],
+            "item": r["Item"],
+            "longOI": num(r["OpenInterest(Long)"]),
+            "shortOI": num(r["OpenInterest(Short)"]),
+            "netOI": num(r["OpenInterest(Net)"]),
+            "netTrade": num(r["TradingVolume(Net)"]),
+        })
+    return date, out
+
+
 def build_stocks(inst_map):
     """整理全部上市＋上櫃個股盤後資料，供個股查詢頁使用。
 
@@ -290,6 +337,40 @@ def main():
     inst_date, institutional = get_institutional(stocks_date)
     foreign_buy, foreign_sell, trust_buy, inst_map = get_t86(stocks_date)
 
+    # 籌碼面：信用交易彙總與期貨法人部位，任一來源失敗不應讓主要資料也失敗
+    margin = None
+    try:
+        margin = get_margin(stocks_date)
+    except Exception as e:
+        print(f"MI_MARGN fetch failed: {e}", file=sys.stderr)
+    fut_date, fut_rows = None, []
+    try:
+        fut_date, fut_rows = get_futures_positions()
+    except Exception as e:
+        print(f"TAIFEX fetch failed: {e}", file=sys.stderr)
+
+    chip_path = DATA_DIR / "chip_history.json"
+    try:
+        chip_history = json.loads(chip_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        chip_history = []
+    if margin:
+        # 外資大台淨未平倉一併留存（期交所資料日期不同步時記 None）
+        f_net = next(
+            (r["netOI"] for r in fut_rows
+             if fut_date == stocks_date and r["contract"] == "臺股期貨" and r["item"].startswith("外資")),
+            None,
+        )
+        chip_history = [h for h in chip_history if h["date"] != stocks_date]
+        chip_history.append({
+            "date": stocks_date,
+            "fin": margin["finValue"],
+            "shortU": margin["shortUnits"],
+            "fNet": f_net,
+        })
+        chip_history.sort(key=lambda h: h["date"])
+        chip_history = chip_history[-CHIP_HISTORY_MAX:]
+
     # 把法人買賣超併回個股資料
     for code, inst in inst_map.items():
         if code in stocks_raw and stocks_raw[code][1] == "tse":
@@ -316,6 +397,11 @@ def main():
         "foreignBuy": foreign_buy,
         "foreignSell": foreign_sell,
         "trustBuy": trust_buy,
+        "chips": {
+            "margin": margin,
+            "futures": {"date": fut_date, "rows": fut_rows},
+            "history": chip_history,
+        },
         "fx": {"latest": fx_today, "history": fx_history},
     }
 
@@ -325,6 +411,10 @@ def main():
     fx_path.write_text(
         json.dumps(fx_history, ensure_ascii=False, indent=1), encoding="utf-8"
     )
+    if chip_history:
+        chip_path.write_text(
+            json.dumps(chip_history, ensure_ascii=False, indent=1), encoding="utf-8"
+        )
 
     (DATA_DIR / "stocks.json").write_text(
         json.dumps(
@@ -336,7 +426,8 @@ def main():
 
     print(f"OK dataDate={market['dataDate']} sectors={len(sectors)} "
           f"hot={len(hot_stocks)} fBuy={len(foreign_buy)} fSell={len(foreign_sell)} "
-          f"stocks={len(stocks_raw)}")
+          f"stocks={len(stocks_raw)} margin={'Y' if margin else 'N'} "
+          f"futDate={fut_date} futRows={len(fut_rows)}")
 
 
 if __name__ == "__main__":
