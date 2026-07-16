@@ -17,10 +17,20 @@
     <meta property="og:description" content="最新台股當沖計算機,簡潔易用介面。快速計算股票交易損益,支持做多做空。免費使用,適合新手和專業投資者。立即試算您的投資收益!">
     <meta property="og:url" content="https://yukuolin.github.io/">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="台股當沖計算機">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:image" content="https://yukuolin.github.io/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="股票當沖計算機 | 台股損益計算器 | 簡易介面 | 最新版">
     <meta name="twitter:description" content="最新台股當沖計算機,簡潔易用介面。快速計算股票交易損益,支持做多做空。免費使用,適合新手和專業投資者。立即試算您的投資收益!">
+    <meta name="twitter:image" content="https://yukuolin.github.io/assets/og-image.png">
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,6 +76,51 @@
         "price": "0",
         "priceCurrency": "TWD"
       }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "台股當沖計算機",
+      "alternateName": "台股損益計算器與市場焦點",
+      "url": "https://yukuolin.github.io/",
+      "inLanguage": "zh-Hant"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "當沖的證交稅是多少？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "現股當沖賣出時的證券交易稅由千分之3減半為千分之1.5（0.15%），此減半優惠依現行法規實施中。非當沖的一般交易，賣出時證交稅仍為0.3%。"
+        }
+      }, {
+        "@type": "Question",
+        "name": "股票手續費怎麼計算？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "券商手續費公定上限為成交金額的0.1425%，買進與賣出各收一次。多數電子下單有折扣（例如2.8折即0.1425% × 0.28 ≈ 0.0399%），且多數券商設有單筆最低20元的限制。"
+        }
+      }, {
+        "@type": "Question",
+        "name": "現股當沖需要什麼資格？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "需開立證券帳戶滿3個月，且最近一年內委託買賣成交達10筆（含）以上，並與券商簽署「應付當日沖銷券差有價證券借貸契約書」及風險預告書。若僅做先買後賣的當沖，部分資格條件較寬鬆，詳情以各券商規定為準。"
+        }
+      }, {
+        "@type": "Question",
+        "name": "這個當沖計算機如何計算損益？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "做多損益＝賣出價金－買入價金－買賣手續費－賣出證交稅；做空則相反。計算機會依您輸入的券商折扣自動計算手續費（最低20元），並依是否勾選當沖套用0.15%或0.3%的證交稅率，列出不同賣出價位的損益與報酬率。"
+        }
+      }]
     }
     </script>
 </head>
@@ -247,6 +302,21 @@
             <li class="list-group-item">✅ 幫助提高資金使用效率</li>
         </ul>
         <p class="mt-3 text-muted">記住，雖然當沖可能帶來快速收益，但也伴隨著高風險。請務必在充分了解風險的情況下進行交易。</p>
+
+        <h2>常見問題（FAQ）</h2>
+        <div class="mt-3">
+            <h3 class="h5 mt-3">當沖的證交稅是多少？</h3>
+            <p>現股當沖賣出時的證券交易稅由千分之 3 減半為千分之 1.5（0.15%），此減半優惠依現行法規實施中。非當沖的一般交易，賣出時證交稅仍為 0.3%。本計算機可依是否勾選「當沖」自動套用對應稅率。</p>
+
+            <h3 class="h5 mt-3">股票手續費怎麼計算？</h3>
+            <p>券商手續費公定上限為成交金額的 0.1425%，買進與賣出各收一次。多數電子下單有折扣（例如 2.8 折即 0.1425% × 0.28 ≈ 0.0399%），且多數券商設有單筆最低 20 元的限制。詳細計算方式可參考<a href="./caculation.html">手續費與證交稅說明</a>。</p>
+
+            <h3 class="h5 mt-3">現股當沖需要什麼資格？</h3>
+            <p>需開立證券帳戶滿 3 個月，且最近一年內委託買賣成交達 10 筆（含）以上，並與券商簽署「應付當日沖銷券差有價證券借貸契約書」及風險預告書。詳情以各券商規定為準。</p>
+
+            <h3 class="h5 mt-3">這個當沖計算機如何計算損益？</h3>
+            <p>做多損益＝賣出價金 − 買入價金 − 買賣手續費 − 賣出證交稅；做空則相反。輸入買入股價、張數與券商折扣後，計算機會列出不同賣出價位的損益、報酬率、手續費與證交稅，幫助您在進場前評估出場價位。</p>
+        </div>
 
         <h2>更多免費工具</h2>
         <ul class="list-group list-group-flush mt-3">
