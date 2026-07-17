@@ -258,6 +258,121 @@
         }
     }
 
+    // 上市／上櫃當沖占比
+    function renderDayTrading(dayTrading) {
+        var el = document.getElementById("dayTradingSummary");
+        if (!el) return;
+        var cards = [];
+        var tse = dayTrading && dayTrading.tse;
+        var otc = dayTrading && dayTrading.otc;
+        if (tse) {
+            cards.push({
+                label: "上市當沖占比（成交量）",
+                value: fmt(tse.sharesPct, 2) + "%",
+                note: "買進金額占比 " + fmt(tse.buyValuePct, 2) + "%／賣出金額占比 " + fmt(tse.sellValuePct, 2) + "%",
+                cls: ""
+            });
+        }
+        if (otc) {
+            cards.push({
+                label: "上櫃當沖占比（成交量）",
+                value: fmt(otc.sharesPct, 2) + "%",
+                note: "買進金額占比 " + fmt(otc.buyValuePct, 2) + "%／賣出金額占比 " + fmt(otc.sellValuePct, 2) + "%",
+                cls: ""
+            });
+        }
+        if (cards.length) {
+            el.innerHTML = cards.map(function (c) {
+                return '<div class="summary-item"><span class="summary-label">' + esc(c.label) +
+                    '</span><span class="summary-value ' + c.cls + '">' + esc(c.value) +
+                    '</span><span class="summary-note">' + esc(c.note) + "</span></div>";
+            }).join("");
+            el.style.display = "flex";
+        }
+    }
+
+    // 選擇權 Put/Call 比 + 大額交易人未沖銷部位集中度
+    function renderOptions(pcr, largeTraders, dataDate) {
+        var el = document.getElementById("optionsSummary");
+        var noteEl = document.getElementById("pcrNote");
+        if (el && pcr) {
+            var cards = [{
+                label: "臺指選擇權 Put/Call 比（成交量）",
+                value: fmt(pcr.volumeRatio, 2) + "%",
+                note: pcr.volumeRatio > 100 ? "賣權成交多於買權，避險／看空需求較高" : "買權成交多於賣權，市場情緒偏樂觀",
+                cls: ""
+            }, {
+                label: "臺指選擇權 Put/Call 比（未平倉）",
+                value: fmt(pcr.oiRatio, 2) + "%",
+                note: pcr.oiRatio > 100 ? "賣權未平倉多於買權" : "買權未平倉多於賣權",
+                cls: ""
+            }];
+            el.innerHTML = cards.map(function (c) {
+                return '<div class="summary-item"><span class="summary-label">' + esc(c.label) +
+                    '</span><span class="summary-value ' + c.cls + '">' + esc(c.value) +
+                    '</span><span class="summary-note">' + esc(c.note) + "</span></div>";
+            }).join("");
+            el.style.display = "flex";
+
+            if (noteEl) {
+                var hist = pcr.history || [];
+                var note = "Put/Call 比：比值 100% 代表買賣權成交量／未平倉量相當；資料日期 " + dateLabel(pcr.date) + "。";
+                if (hist.length > 5) {
+                    var vals = hist.slice(-5).map(function (h) { return h.volumeRatio; }).filter(function (v) { return v !== null && v !== undefined; });
+                    if (vals.length) {
+                        var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+                        note += "近 5 日成交量比均值約 " + fmt(avg, 1) + "%。";
+                    }
+                }
+                noteEl.textContent = note;
+            }
+        } else if (noteEl) {
+            noteEl.textContent = "尚無選擇權 Put/Call 比資料。";
+        }
+
+        var tbody = document.querySelector("#largeTraderTable tbody");
+        if (!tbody) return;
+        if (!largeTraders || !largeTraders.all) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">尚無大額交易人資料</td></tr>';
+            return;
+        }
+        var rowsData = [
+            { label: "全部交易人", d: largeTraders.all },
+            { label: "特定法人（含外資、投信、自營商）", d: largeTraders.specific }
+        ].filter(function (r) { return r.d; });
+        tbody.innerHTML = rowsData.map(function (r) {
+            return "<tr><td class='text-left'>" + esc(r.label) + "</td>" +
+                "<td>" + fmt(r.d.top5BuyPct, 1) + "%</td>" +
+                "<td>" + fmt(r.d.top5SellPct, 1) + "%</td>" +
+                "<td>" + fmt(r.d.top10BuyPct, 1) + "%</td>" +
+                "<td>" + fmt(r.d.top10SellPct, 1) + "%</td></tr>";
+        }).join("");
+    }
+
+    // 外資持股比重（依產業別）
+    function renderForeignHolding(fh) {
+        var summaryEl = document.getElementById("foreignHoldingSummary");
+        var tbody = document.querySelector("#foreignHoldingTable tbody");
+        if (!fh) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">尚無外資持股資料</td></tr>';
+            return;
+        }
+        if (summaryEl && fh.avgPct !== null && fh.avgPct !== undefined) {
+            summaryEl.innerHTML = '<div class="summary-item"><span class="summary-label">集中市場外資及陸資持股比重（加權平均）</span>' +
+                '<span class="summary-value">' + fmt(fh.avgPct, 2) + '%</span>' +
+                '<span class="summary-note">資料日期：' + dateLabel(fh.date) + '</span></div>';
+            summaryEl.style.display = "flex";
+        }
+        var sectors = fh.topSectors || [];
+        if (tbody) {
+            tbody.innerHTML = sectors.length
+                ? sectors.map(function (s) {
+                    return "<tr><td class='text-left'>" + esc(s.name) + "</td><td class='text-right'>" + fmt(s.pct, 2) + "%</td></tr>";
+                }).join("")
+                : '<tr><td colspan="2" class="text-muted text-center">尚無外資持股資料</td></tr>';
+        }
+    }
+
     function renderFx(fx) {
         var tbody = document.querySelector("#fxTable tbody");
         var history = (fx && fx.history) || [];
@@ -287,6 +402,82 @@
 
         var noteEl = document.getElementById("fxNote");
         if (noteEl && latest.date) noteEl.textContent = "匯率資料日期：" + latest.date + "。";
+    }
+
+    /* ---------- 經濟事件日曆 ---------- */
+
+    var EVENT_CATEGORY = {
+        fomc: { label: "FOMC", cls: "event-badge-fomc" },
+        cpi: { label: "CPI", cls: "event-badge-cpi" },
+        nfp: { label: "非農", cls: "event-badge-nfp" },
+        cbc: { label: "央行", cls: "event-badge-cbc" },
+        election: { label: "選舉", cls: "event-badge-election" }
+    };
+    var WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+    var EVENTS_SHOW_MAX = 10;
+
+    function parseYmd(s) {
+        var p = s.split("-");
+        return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+    }
+
+    function eventDateLabel(ev) {
+        var d = parseYmd(ev.date);
+        var label = (d.getUTCMonth() + 1) + "/" + d.getUTCDate();
+        if (ev.endDate) {
+            var d2 = parseYmd(ev.endDate);
+            label += "-" + d2.getUTCDate();
+        }
+        return '<span class="event-day">' + label + '</span>' +
+            '<span class="event-weekday">週' + WEEKDAYS[d.getUTCDay()] + "</span>";
+    }
+
+    function renderEvents(data) {
+        var el = document.getElementById("eventsList");
+        var noteEl = document.getElementById("eventsNote");
+        if (!el || !data || !data.events) return;
+
+        // 以台北時間今日 00:00 為基準，只顯示今天以後（含今天）的事件
+        var todayStr = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+        var todayUtc = parseYmd(todayStr);
+
+        var upcoming = data.events.filter(function (ev) {
+            var end = ev.endDate || ev.date;
+            return parseYmd(end) >= todayUtc;
+        }).sort(function (a, b) {
+            return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+        }).slice(0, EVENTS_SHOW_MAX);
+
+        if (!upcoming.length) {
+            el.innerHTML = '<p class="text-muted">近期無已知事件，資料將於官方公布新時程後更新。</p>';
+            return;
+        }
+
+        el.innerHTML = upcoming.map(function (ev, i) {
+            var cat = EVENT_CATEGORY[ev.category] || { label: ev.category, cls: "" };
+            var days = Math.round((parseYmd(ev.date) - todayUtc) / 86400000);
+            var countdown = days === 0 ? "今天" : days === 1 ? "明天" : days + " 天後";
+            return '<div class="event-item' + (i === 0 ? " event-next" : "") + '">' +
+                '<span class="event-date">' + eventDateLabel(ev) + "</span>" +
+                '<span class="event-badge ' + cat.cls + '">' + esc(cat.label) + "</span>" +
+                '<span class="event-title">' + esc(ev.title) + "</span>" +
+                '<span class="event-countdown">' + countdown + "</span></div>";
+        }).join("");
+
+        if (noteEl) {
+            noteEl.textContent = "資料來源：美國聯準會、美國勞工統計局、台灣中央銀行、中央選舉委員會官方公告日程（" +
+                (data.updatedAt || "") + " 更新）；實際日期以官方公告為準，可能異動。";
+        }
+    }
+
+    function loadEvents() {
+        fetch("./data/events.json").then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+        }).then(renderEvents).catch(function () {
+            var el = document.getElementById("eventsList");
+            if (el) el.innerHTML = '<p class="text-muted">事件日曆載入失敗，請稍後再試。</p>';
+        });
     }
 
     // 頁面載入時再抓一次即時匯率，比每日排程更新鮮（失敗就沿用檔案資料）
@@ -323,9 +514,13 @@
             renderRank("foreignSellTable", m.foreignSell, "val-down");
             renderRank("trustBuyTable", m.trustBuy, "val-up");
             renderChips(m.chips || {}, m.taiex, m.dataDate);
+            renderDayTrading((m.chips || {}).dayTrading);
+            renderOptions((m.chips || {}).putCallRatio, (m.chips || {}).largeTraders, m.dataDate);
+            renderForeignHolding((m.chips || {}).foreignHolding);
             renderHot(m.hotStocks || []);
             renderFx(m.fx || {});
             if (m.fx) refreshFxLive(m.fx);
+            loadEvents();
             // 資料渲染後版面高度改變，帶錨點進來時重新定位
             if (location.hash) {
                 var target = document.getElementById(location.hash.slice(1));

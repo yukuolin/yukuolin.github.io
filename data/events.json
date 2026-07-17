@@ -1,0 +1,43 @@
+{
+ "updatedAt": "2026-07-18",
+ "sources": {
+  "fomc": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+  "nfp_cpi": "https://www.bls.gov/schedule/news_release/current_year.asp",
+  "cbc": "https://www.cbc.gov.tw/tw/lp-357-1.html",
+  "tw_election": "https://web.cec.gov.tw/",
+  "us_election": "https://en.wikipedia.org/wiki/2026_United_States_elections"
+ },
+ "events": [
+  {"date": "2026-01-27", "endDate": "2026-01-28", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-01-13", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-02-13", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-03-11", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-03-17", "endDate": "2026-03-18", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-03-19", "category": "cbc", "region": "tw", "title": "台灣央行理監事聯席會議"},
+  {"date": "2026-04-10", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-04-28", "endDate": "2026-04-29", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-05-12", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-06-10", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-06-16", "endDate": "2026-06-17", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-06-18", "category": "cbc", "region": "tw", "title": "台灣央行理監事聯席會議"},
+  {"date": "2026-07-14", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-07-28", "endDate": "2026-07-29", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-08-07", "category": "nfp", "region": "us", "title": "美國非農就業報告公布（7月數據）"},
+  {"date": "2026-08-12", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-09-04", "category": "nfp", "region": "us", "title": "美國非農就業報告公布（8月數據）"},
+  {"date": "2026-09-11", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-09-15", "endDate": "2026-09-16", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-09-17", "category": "cbc", "region": "tw", "title": "台灣央行理監事聯席會議"},
+  {"date": "2026-10-02", "category": "nfp", "region": "us", "title": "美國非農就業報告公布（9月數據）"},
+  {"date": "2026-10-14", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-10-27", "endDate": "2026-10-28", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-11-03", "category": "election", "region": "us", "title": "美國期中選舉（國會參眾議員改選）"},
+  {"date": "2026-11-06", "category": "nfp", "region": "us", "title": "美國非農就業報告公布（10月數據）"},
+  {"date": "2026-11-10", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-11-28", "category": "election", "region": "tw", "title": "台灣九合一地方公職人員選舉"},
+  {"date": "2026-12-04", "category": "nfp", "region": "us", "title": "美國非農就業報告公布（11月數據）"},
+  {"date": "2026-12-08", "endDate": "2026-12-09", "category": "fomc", "region": "us", "title": "美國 FOMC 利率決策會議"},
+  {"date": "2026-12-10", "category": "cpi", "region": "us", "title": "美國 CPI（消費者物價指數）公布"},
+  {"date": "2026-12-17", "category": "cbc", "region": "tw", "title": "台灣央行理監事聯席會議"}
+ ]
+}

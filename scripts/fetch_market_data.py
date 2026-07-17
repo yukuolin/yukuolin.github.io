@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 """抓取台股每日市場資料與台幣匯率，輸出 data/market.json 供前端讀取。
 
-資料來源（商業使用合規優先，盡量採官方 OpenAPI 開放資料）：
-- 臺灣證券交易所 OpenAPI（openapi.twse.com.tw）：大盤/類股指數、成交量前二十、
-  個股日成交資訊、本益比/淨值比/殖利率
+資料來源（商業使用合規優先，盡量採官方開放資料）：
+- 臺灣證券交易所網站盤後資訊 JSON（www.twse.com.tw/rwd/zh/afterTrading，非
+  openapi.twse.com.tw）：大盤/類股指數、成交量前二十、個股日成交資訊、
+  本益比/淨值比/殖利率。這是官網「盤後資訊」頁面本身呼叫的端點，收盤當日
+  下午即有資料；openapi.twse.com.tw 的同類資料集要等到隔日才同步，會拖慢
+  整頁更新時間，因此改用前者做為主要資料來源。
 - 臺灣證券交易所 rwd JSON（三大法人 BFI82U/T86、信用交易統計 MI_MARGN，
-  OpenAPI 未提供整體市場數字，帶明確日期參數）
-- 臺灣期貨交易所 OpenAPI（openapi.taifex.com.tw）：三大法人期貨未平倉部位
-- 證券櫃檯買賣中心 OpenAPI（www.tpex.org.tw/openapi）：上櫃行情與本益比
+  同樣是官網當日端點，帶明確日期參數）
+- 臺灣期貨交易所 OpenAPI（openapi.taifex.com.tw）：三大法人期貨未平倉部位、
+  臺指選擇權 Put/Call 比、大額交易人未沖銷部位集中度
+- 證券櫃檯買賣中心 OpenAPI（www.tpex.org.tw/openapi）：上櫃行情與本益比、
+  上櫃當沖占比（此端點本身即為當日更新）
 - open.er-api.com（台幣匯率，中間價參考；頁面須標示 Rates By Exchange Rate API）
 
-注意：TWSE OpenAPI 為夜間更新（收盤當晚至次日清晨），排程見
-.github/workflows/market-data.yml。所有來源的資料日期必須一致，否則整批放棄
-（保留前一份完整資料，等下一次排程重試）。
+「盤後籌碼分析」單元額外指標：上市當沖占比（TWSE rwd dayTrading/TWTB4U）、
+外資及陸資持股比率（TWSE rwd fund/MI_QFIIS_cat）。
+
+注意：所有來源的資料日期必須一致，否則整批放棄（保留前一份完整資料，
+等下一次排程重試）。排程見 .github/workflows/market-data.yml。
 """
 
 import json
@@ -23,7 +30,6 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-TWSE_OPENAPI = "https://openapi.twse.com.tw/v1"
 TWSE_RWD = "https://www.twse.com.tw/rwd/zh"
 TPEX_OPENAPI = "https://www.tpex.org.tw/openapi/v1"
 TAIFEX_OPENAPI = "https://openapi.taifex.com.tw/v1"
@@ -75,7 +81,7 @@ def skip_run(msg):
 
 
 def roc_date(s):
-    """OpenAPI 的民國日期 '1150709' -> '20260709'；已是西元或空值則原樣回傳。"""
+    """民國日期 '1150709' -> '20260709'；已是西元或空值則原樣回傳。"""
     s = str(s or "").strip()
     if re.fullmatch(r"1\d{6}", s):
         return str(int(s[:3]) + 1911) + s[3:]
@@ -83,25 +89,32 @@ def roc_date(s):
 
 
 def sign_of(s):
-    """漲跌欄位 '+'/'-'（OpenAPI 為純文字）→ 1/-1/0。"""
+    """漲跌欄位 '+'/'-'（HTML 包裹的純文字）→ 1/-1/0。"""
     text = re.sub(r"<[^>]*>", "", str(s or "")).strip()
     return -1 if text == "-" else (1 if text == "+" else 0)
 
 
-def get_indices():
-    """大盤指數 + 類股指數（熱門族群用）。OpenAPI 每日收盤行情-大盤統計資訊。"""
-    rows = fetch_json(f"{TWSE_OPENAPI}/exchangeReport/MI_INDEX")
-    date = roc_date(rows[0].get("日期")) if rows else None
+def fetch_allbut0999():
+    """證交所盤後資訊「每日收盤行情」整合端點：一次取得大盤/類股指數、
+    大盤統計與全部個股當日成交資訊（含本益比）。省略 date 參數會自動回傳
+    最近一個已公布的交易日，用法與過去的 OpenAPI 相同，但資料當日下午即可取得。
+    """
+    return fetch_json(f"{TWSE_RWD}/afterTrading/MI_INDEX?response=json&type=ALLBUT0999")
+
+
+def parse_indices(d):
+    """大盤指數 + 類股指數（熱門族群用），取自 ALLBUT0999 的「價格指數」表。"""
+    date = d.get("date")
     taiex = None
     sectors = []
-    for r in rows:
-        name = r.get("指數", "").strip()
-        close = num(r.get("收盤指數"))
+    for r in d["tables"][0]["data"]:
+        name = r[0].strip()
+        close = num(r[1])
         if close is None:
             continue
-        sign = sign_of(r.get("漲跌"))
-        change = (num(r.get("漲跌點數")) or 0) * sign
-        change_pct = num(r.get("漲跌百分比"))  # 此欄位本身已帶正負號
+        sign = sign_of(r[2])
+        change = (num(r[3]) or 0) * sign
+        change_pct = num(r[4])  # 此欄位本身已帶正負號
         item = {"name": name, "close": close, "change": change, "changePct": change_pct}
         if name == "發行量加權股價指數":
             taiex = item
@@ -112,7 +125,7 @@ def get_indices():
 
 
 def get_institutional(date_str):
-    """三大法人買賣金額統計表（BFI82U，OpenAPI 未提供，走 rwd 並指定日期）。金額單位：元。"""
+    """三大法人買賣金額統計表（BFI82U，帶明確日期）。金額單位：元。"""
     d = fetch_json(f"{TWSE_RWD}/fund/BFI82U?response=json&dayDate={date_str}&type=day")
     rows = []
     for r in d["data"]:
@@ -126,31 +139,31 @@ def get_institutional(date_str):
 
 
 def get_hot_stocks():
-    """集中市場成交量前二十名證券（OpenAPI MI_INDEX20）。"""
-    rows = fetch_json(f"{TWSE_OPENAPI}/exchangeReport/MI_INDEX20")
-    date = rows[0].get("Date") if rows else None  # 此端點已是西元格式
+    """集中市場成交量前二十名證券（盤後資訊 MI_INDEX20）。"""
+    d = fetch_json(f"{TWSE_RWD}/afterTrading/MI_INDEX20?response=json")
+    date = d.get("date")
     stocks = []
-    for r in rows:
-        close = num(r.get("ClosingPrice"))
-        sign = sign_of(r.get("Dir"))
-        diff = num(r.get("Change")) or 0
+    for r in d["data"]:
+        close = num(r[8])
+        sign = sign_of(r[9])
+        diff = num(r[10]) or 0
         change = diff * (sign if sign else 0)
         prev = close - change if close is not None else None
         stocks.append({
-            "rank": num(r.get("Rank")),
-            "code": r.get("Code", "").strip(),
-            "name": r.get("Name", "").strip(),
-            "volume": num(r.get("TradeVolume")),      # 成交股數
-            "trades": num(r.get("Transaction")),      # 成交筆數
+            "rank": num(r[0]),
+            "code": str(r[1]).strip(),
+            "name": r[2].strip(),
+            "volume": num(r[3]),      # 成交股數
+            "trades": num(r[4]),      # 成交筆數
             "close": close,
             "change": change,
             "changePct": round(change / prev * 100, 2) if prev else None,
         })
-    return roc_date(date), stocks
+    return date, stocks
 
 
 def get_t86(date_str):
-    """三大法人買賣超日報（個股，單位：股，OpenAPI 未提供，走 rwd）→ 排行榜與個股查詢用的對照表。"""
+    """三大法人買賣超日報（個股，單位：股，帶明確日期）→ 排行榜與個股查詢用的對照表。"""
     d = fetch_json(f"{TWSE_RWD}/fund/T86?response=json&date={date_str}&selectType=ALL")
     if d.get("stat") != "OK":
         return [], [], [], {}
@@ -193,7 +206,7 @@ def get_t86(date_str):
 
 
 def get_margin(date_str):
-    """信用交易統計彙總（MI_MARGN，OpenAPI 僅有個股明細，整體市場數字走 rwd 並指定日期）。
+    """信用交易統計彙總（MI_MARGN，帶明確日期）。
 
     融資金額單位：仟元；融資／融券張數單位：交易單位（張）。
     """
@@ -214,8 +227,10 @@ def get_margin(date_str):
 
 def get_futures_positions():
     """期交所三大法人-區分各期貨契約（OpenAPI，僅提供最新交易日）。單位：口。"""
+    # 不帶 response=json 時，此端點近期改為預設回傳 CSV（BOM+UTF-8），須明確要求 JSON
     rows = fetch_json(
         f"{TAIFEX_OPENAPI}/MarketDataOfMajorInstitutionalTradersDetailsOfFuturesContractsBytheDate"
+        "?response=json"
     )
     date = rows[0].get("Date") if rows else None
     out = []
@@ -233,7 +248,105 @@ def get_futures_positions():
     return date, out
 
 
-def build_stocks(inst_map):
+def get_day_trading(date_str):
+    """上市／上櫃現股當沖占市場比重（成交量/買進金額/賣出金額）。"""
+    tse = None
+    try:
+        d = fetch_json(f"{TWSE_RWD}/dayTrading/TWTB4U?response=json&date={date_str}")
+        row = d["tables"][0]["data"][0]
+        tse = {"sharesPct": num(row[1]), "buyValuePct": num(row[3]), "sellValuePct": num(row[5])}
+    except Exception as e:
+        print(f"TWSE day-trading fetch failed: {e}", file=sys.stderr)
+
+    otc = None
+    try:
+        rows = fetch_json(f"{TPEX_OPENAPI}/tpex_intraday_trading_statistics")
+        for r in rows:
+            if roc_date(r.get("Date")) == date_str:
+                otc = {
+                    "sharesPct": num(str(r.get("DayTradingVolumeOfTheMarket", "")).replace("%", "")),
+                    "buyValuePct": num(str(r.get("DayTradingValueOfBuyOfTheMarket", "")).replace("%", "")),
+                    "sellValuePct": num(str(r.get("DayTradingValueOfSellsOfTheMarket", "")).replace("%", "")),
+                }
+                break
+    except Exception as e:
+        print(f"TPEX day-trading fetch failed: {e}", file=sys.stderr)
+
+    return {"tse": tse, "otc": otc}
+
+
+def get_put_call_ratio():
+    """臺指選擇權 Put/Call 比（TAIFEX，近期序列本身自帶約一個月歷史）。
+    注意：此端點不吃 `response=json` 查詢參數（會導回 Swagger 頁），
+    省略即可拿到 JSON，與 get_futures_positions() 那個端點的行為不同。
+    """
+    rows = fetch_json(f"{TAIFEX_OPENAPI}/PutCallRatio")
+    if not rows:
+        return None
+    history = list(reversed(rows[:10]))  # 近 10 筆改依日期由舊到新排列，方便畫趨勢
+    latest = rows[0]
+    return {
+        "date": latest.get("Date"),
+        "volumeRatio": num(latest.get("PutCallVolumeRatio%")),
+        "oiRatio": num(latest.get("PutCallOIRatio%")),
+        "history": [
+            {
+                "date": r.get("Date"),
+                "volumeRatio": num(r.get("PutCallVolumeRatio%")),
+                "oiRatio": num(r.get("PutCallOIRatio%")),
+            }
+            for r in history
+        ],
+    }
+
+
+def get_large_traders():
+    """臺股期貨（TX，含小型/微型臺指期貨換算，全月份合計）大額交易人未沖銷部位集中度，
+    即市場俗稱的「十大特定法人／十大交易人」籌碼集中度。僅提供最新交易日，同一端點
+    不吃 `response=json`（同 get_put_call_ratio 的限制）。
+    """
+    rows = fetch_json(f"{TAIFEX_OPENAPI}/OpenInterestOfLargeTradersFutures")
+    out = {}
+    for r in rows:
+        if r.get("Contract") != "TX" or r.get("SettlementMonth") != "999912":
+            continue
+        market_oi = num(r.get("OIOfMarket")) or 0
+        entry = {
+            "top5BuyPct": round(num(r.get("Top5Buy")) / market_oi * 100, 1) if market_oi else None,
+            "top5SellPct": round(num(r.get("Top5Sell")) / market_oi * 100, 1) if market_oi else None,
+            "top10BuyPct": round(num(r.get("Top10Buy")) / market_oi * 100, 1) if market_oi else None,
+            "top10SellPct": round(num(r.get("Top10Sell")) / market_oi * 100, 1) if market_oi else None,
+            "marketOI": market_oi,
+        }
+        out["all" if r.get("TypeOfTraders") == "0" else "specific"] = (r.get("Date"), entry)
+    if "all" not in out:
+        return None
+    date, all_entry = out["all"]
+    return {
+        "date": date,
+        "all": all_entry,
+        "specific": out["specific"][1] if "specific" in out else None,
+    }
+
+
+def get_foreign_holding(date_str):
+    """外資及陸資持股比率（依產業別彙總，rwd 當日資料）；順便算全市場加權平均。"""
+    d = fetch_json(f"{TWSE_RWD}/fund/MI_QFIIS_cat?response=json&date={date_str}")
+    rows = []
+    total_shares = 0
+    total_held = 0
+    for r in d["data"]:
+        name, shares, held, pct = r[0].strip(), num(r[2]), num(r[3]), num(r[4])
+        if shares:
+            total_shares += shares
+            total_held += held or 0
+        rows.append({"name": name, "pct": pct})
+    rows.sort(key=lambda x: x["pct"] if x["pct"] is not None else 0, reverse=True)
+    avg_pct = round(total_held / total_shares * 100, 2) if total_shares else None
+    return {"date": d.get("date"), "avgPct": avg_pct, "topSectors": rows[:5]}
+
+
+def build_stocks(allbut0999):
     """整理全部上市＋上櫃個股盤後資料，供個股查詢頁使用。
 
     每檔格式：[名稱, 市場, 收盤, 漲跌, 開盤, 最高, 最低, 成交股數, 成交筆數,
@@ -241,39 +354,40 @@ def build_stocks(inst_map):
     """
     stocks = {}
 
-    # 上市：個股日成交資訊（OpenAPI，Change 欄位自帶正負號）
-    rows = fetch_json(f"{TWSE_OPENAPI}/exchangeReport/STOCK_DAY_ALL")
-    date = roc_date(rows[0].get("Date")) if rows else None
-    for r in rows:
-        code = r["Code"].strip()
-        inst = inst_map.get(code, (None, None, None))
+    # 上市：每日收盤行情（ALLBUT0999 最後一張表，已含本益比）
+    date = allbut0999.get("date")
+    quote_table = allbut0999["tables"][8]
+    for r in quote_table["data"]:
+        code = r[0].strip()
+        sign = sign_of(r[9])
+        change = (num(r[10]) or 0) * sign
         stocks[code] = [
-            r["Name"].strip(), "tse", num(r["ClosingPrice"]), num(r["Change"]) or 0,
-            num(r["OpeningPrice"]), num(r["HighestPrice"]), num(r["LowestPrice"]),
-            num(r["TradeVolume"]), num(r["Transaction"]), num(r["TradeValue"]),
+            r[1].strip(), "tse", num(r[8]), change,
+            num(r[5]), num(r[6]), num(r[7]),
+            num(r[2]), num(r[3]), num(r[4]),
             None, None, None,
-            inst[0], inst[1], inst[2],
+            None, None, None,
         ]
 
-    # 上市：本益比、殖利率與股價淨值比（OpenAPI）
+    # 上市：本益比／股價淨值比／殖利率（BWIBBU_d 同一站台當日更新；ALLBUT0999
+    # 內建的本益比欄位對虧損股常誤植為 0.00，改以此表為準，缺值時保留 None）
     try:
-        rows = fetch_json(f"{TWSE_OPENAPI}/exchangeReport/BWIBBU_ALL")
-        for r in rows:
-            code = r["Code"].strip()
+        rows = fetch_json(f"{TWSE_RWD}/afterTrading/BWIBBU_d?response=json&selectType=ALL")
+        for r in rows["data"]:
+            code = r[0].strip()
             if code in stocks:
-                stocks[code][10] = num(r["PEratio"])
-                stocks[code][11] = num(r["PBratio"])
-                stocks[code][12] = num(r["DividendYield"])
+                stocks[code][10] = num(r[5])  # 本益比
+                stocks[code][11] = num(r[6])  # 股價淨值比
+                stocks[code][12] = num(r[3])  # 殖利率(%)
     except Exception as e:
-        print(f"BWIBBU_ALL fetch failed: {e}", file=sys.stderr)
+        print(f"BWIBBU_d fetch failed: {e}", file=sys.stderr)
 
     # 上櫃：每日收盤 + 本益比/淨值比/殖利率（過濾權證，只留個股/特別股/ETF/ETN）
     code_ok = re.compile(r"^\d{4}[A-Z]?$|^0[02]\d{2,4}[A-Z]?$")
     rows = fetch_json(f"{TPEX_OPENAPI}/tpex_mainboard_daily_close_quotes")
     tpex_date = roc_date(rows[0].get("Date")) if rows else None
     if tpex_date != date:
-        # 兩市場資料日期不同步（TPEX 當日更新、TWSE OpenAPI 夜間更新），
-        # 整批放棄以免混合不同交易日的資料
+        # 兩市場資料日期不同步，整批放棄以免混合不同交易日的資料
         skip_run(f"日期不一致：TWSE={date} TPEX={tpex_date}，本次不更新")
     for r in rows:
         code = r["SecuritiesCompanyCode"].strip()
@@ -323,19 +437,22 @@ def get_fx(history):
 def main():
     DATA_DIR.mkdir(exist_ok=True)
 
-    # 先抓個股行情取得 OpenAPI 目前的資料日期，其餘來源都對齊這一天
-    stocks_date, stocks_raw = build_stocks({})
+    # 大盤指數 + 個股行情一次抓齊（同一個 rwd 端點），作為本次更新的基準日期
+    allbut0999 = fetch_allbut0999()
+    idx_date, taiex, sectors = parse_indices(allbut0999)
+    stocks_date = allbut0999.get("date")
 
-    idx_date, taiex, sectors = get_indices()
     hot_date, hot_stocks = get_hot_stocks()
     if not (stocks_date == idx_date == hot_date):
         skip_run(
-            f"日期不一致：STOCK_DAY_ALL={stocks_date} MI_INDEX={idx_date} "
-            f"MI_INDEX20={hot_date}，本次不更新"
+            f"日期不一致：ALLBUT0999={stocks_date} MI_INDEX20={hot_date}，本次不更新"
         )
 
     inst_date, institutional = get_institutional(stocks_date)
     foreign_buy, foreign_sell, trust_buy, inst_map = get_t86(stocks_date)
+
+    # 個股行情（含上市/上櫃）
+    stocks_date, stocks_raw = build_stocks(allbut0999)
 
     # 籌碼面：信用交易彙總與期貨法人部位，任一來源失敗不應讓主要資料也失敗
     margin = None
@@ -348,6 +465,28 @@ def main():
         fut_date, fut_rows = get_futures_positions()
     except Exception as e:
         print(f"TAIFEX fetch failed: {e}", file=sys.stderr)
+
+    # 盤後籌碼分析新增指標：任一失敗都不應讓主要資料跳過
+    day_trading = {"tse": None, "otc": None}
+    try:
+        day_trading = get_day_trading(stocks_date)
+    except Exception as e:
+        print(f"Day-trading fetch failed: {e}", file=sys.stderr)
+    put_call_ratio = None
+    try:
+        put_call_ratio = get_put_call_ratio()
+    except Exception as e:
+        print(f"PutCallRatio fetch failed: {e}", file=sys.stderr)
+    large_traders = None
+    try:
+        large_traders = get_large_traders()
+    except Exception as e:
+        print(f"OpenInterestOfLargeTradersFutures fetch failed: {e}", file=sys.stderr)
+    foreign_holding = None
+    try:
+        foreign_holding = get_foreign_holding(stocks_date)
+    except Exception as e:
+        print(f"MI_QFIIS_cat fetch failed: {e}", file=sys.stderr)
 
     chip_path = DATA_DIR / "chip_history.json"
     try:
@@ -401,6 +540,10 @@ def main():
             "margin": margin,
             "futures": {"date": fut_date, "rows": fut_rows},
             "history": chip_history,
+            "dayTrading": day_trading,
+            "putCallRatio": put_call_ratio,
+            "largeTraders": large_traders,
+            "foreignHolding": foreign_holding,
         },
         "fx": {"latest": fx_today, "history": fx_history},
     }

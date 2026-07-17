@@ -417,6 +417,13 @@ p {
     padding-left: 0;
 }
 
+.rank-subtitle {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--primary-light);
+    margin: 0.5rem 0 0.4rem;
+}
+
 .up-title {
     color: var(--up);
 }
@@ -439,6 +446,75 @@ p {
 
 .rank-table thead th {
     padding: 0.55rem 0.5rem;
+}
+
+/* ---------- 經濟事件日曆 ---------- */
+.event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0.5rem 0 1rem;
+}
+
+.event-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+}
+
+.event-item.event-next {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, #fffaf0 0%, #fff4da 100%);
+}
+
+.event-date {
+    flex: 0 0 auto;
+    min-width: 76px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.event-date .event-weekday {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.event-badge {
+    flex: 0 0 auto;
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.event-badge-fomc { background-color: var(--primary); }
+.event-badge-cpi { background-color: var(--accent-dark); }
+.event-badge-nfp { background-color: #7a5cc7; }
+.event-badge-cbc { background-color: #0f7a63; }
+.event-badge-election { background-color: var(--up); }
+
+.event-title {
+    flex: 1 1 auto;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.event-countdown {
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
 }
 
 #instTable td.text-left,
