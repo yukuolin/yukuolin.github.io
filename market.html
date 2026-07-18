@@ -4,16 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率</title>
-    <meta name="description" content="每日更新台股市場焦點：當日成交量前二十名熱門股票、三大法人買賣金額、外資與投信買賣超排行、強弱勢類股族群、台幣匯率變化。免費查詢，資料來源為臺灣證券交易所。">
-    <meta name="keywords" content="台股, 熱門股票, 成交量排行, 三大法人, 外資買賣超, 投信買賣超, 盤後籌碼分析, 籌碼乾淨度, 融資餘額, 當沖占比, 外資期貨未平倉, 選擇權Put/Call比, 大額交易人未沖銷部位, 外資持股比重, 類股, 熱門族群, 台幣匯率, 美元匯率, 加權指數, 經濟事件日曆">
+    <title>台股市場焦點 | 當日熱門股票、強弱勢族群、台幣匯率、經濟事件日曆</title>
+    <meta name="description" content="每日更新台股市場焦點：大盤摘要、當日成交量前二十名熱門股票、強弱勢類股族群、台幣匯率變化、國內外經濟事件日曆。免費查詢，資料來源為臺灣證券交易所。">
+    <meta name="keywords" content="台股, 熱門股票, 成交量排行, 類股, 熱門族群, 類股輪動, 台幣匯率, 美元匯率, 加權指數, 大盤摘要, 經濟事件日曆, FOMC, 非農就業, CPI">
     <meta name="author" content="Yukuo Lin">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://yukuolin.github.io/market.html">
 
     <!-- Social Media Integration -->
-    <meta property="og:title" content="台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率">
-    <meta property="og:description" content="每日更新台股市場焦點：當日成交量排行、三大法人買賣金額、外資與投信買賣超、強弱勢族群、台幣匯率變化。">
+    <meta property="og:title" content="台股市場焦點 | 當日熱門股票、強弱勢族群、台幣匯率、經濟事件日曆">
+    <meta property="og:description" content="每日更新台股市場焦點：大盤摘要、當日成交量排行、強弱勢族群、台幣匯率變化與經濟事件日曆。">
     <meta property="og:url" content="https://yukuolin.github.io/market.html">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="台股當沖計算機">
@@ -23,8 +23,8 @@
     <meta property="og:image:height" content="630">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="台股市場焦點 | 當日熱門股票、三大法人買賣超、外資動向、台幣匯率">
-    <meta name="twitter:description" content="每日更新台股市場焦點：當日成交量排行、三大法人買賣金額、外資與投信買賣超、強弱勢族群、台幣匯率變化。">
+    <meta name="twitter:title" content="台股市場焦點 | 當日熱門股票、強弱勢族群、台幣匯率、經濟事件日曆">
+    <meta name="twitter:description" content="每日更新台股市場焦點：大盤摘要、當日成交量排行、強弱勢族群、台幣匯率變化與經濟事件日曆。">
     <meta name="twitter:image" content="https://yukuolin.github.io/assets/og-image.png">
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -50,7 +50,7 @@
         "@context": "http://schema.org",
         "@type": "WebPage",
         "name": "台股市場焦點",
-        "description": "每日更新台股市場焦點：當日成交量前二十名熱門股票、三大法人買賣金額、外資與投信買賣超排行、強弱勢類股族群、台幣匯率變化。",
+        "description": "每日更新台股市場焦點：大盤摘要、當日成交量前二十名熱門股票、強弱勢類股族群、台幣匯率變化與國內外經濟事件日曆。",
         "author": {
             "@type": "Person",
             "name": "Yukuo Lin"
@@ -58,7 +58,7 @@
         "mainEntity": {
             "@type": "WebPageElement",
             "name": "台股市場焦點",
-            "description": "當日熱門交易股票、三大法人買賣超、外資動向、熱門族群與台幣匯率總覽。",
+            "description": "大盤摘要、當日熱門交易股票、熱門族群、台幣匯率與經濟事件日曆總覽。",
             "url": "https://yukuolin.github.io/market.html"
         }
     }
@@ -106,11 +106,23 @@
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">市場焦點</a>
                     <div class="dropdown-menu market-menu" aria-labelledby="marketMenu">
                         <a class="dropdown-item" href="#market-summary">📊 大盤摘要卡</a>
-                        <a class="dropdown-item" href="#chip-analysis">盤後籌碼分析</a>
                         <a class="dropdown-item" href="#sectors">當日熱門族群</a>
                         <a class="dropdown-item" href="#hot-stocks">成交量前二十熱門股</a>
                         <a class="dropdown-item" href="#fx">台幣匯率變化</a>
                         <a class="dropdown-item" href="#events">國內外經濟事件日曆</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="./chips.html" id="chipsMenu" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">籌碼分析</a>
+                    <div class="dropdown-menu market-menu" aria-labelledby="chipsMenu">
+                        <a class="dropdown-item" href="./chips.html">📊 籌碼分析總覽</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="./chips.html#institutional">三大法人買賣金額</a>
+                        <a class="dropdown-item" href="./chips.html#ranking">外資／投信買賣超 Top 10</a>
+                        <a class="dropdown-item" href="./chips.html#margin">融資槓桿與當沖占比</a>
+                        <a class="dropdown-item" href="./chips.html#futures-options">期貨與選擇權法人籌碼</a>
+                        <a class="dropdown-item" href="./chips.html#foreign-holding">外資持股比重</a>
                     </div>
                 </li>
                 <li class="nav-item">
@@ -132,7 +144,7 @@
     <!-- Hero -->
     <header class="hero">
         <h1 class="mb-2">台股市場焦點</h1>
-        <p class="lead">當日<span class="accent">熱門股票</span>、三大法人與外資買賣超、強弱勢族群、台幣匯率，一頁掌握</p>
+        <p class="lead">當日<span class="accent">熱門股票</span>、強弱勢族群、台幣匯率與經濟事件，一頁掌握</p>
     </header>
 
     <div id="page-content-wrapper">
@@ -144,123 +156,13 @@
             <div id="marketSummary" class="summary-bar" style="display:none;"></div>
         </div>
 
-        <!-- 盤後籌碼分析 -->
+        <!-- 籌碼分析導引 -->
         <div class="container anchor-section" id="chip-analysis">
-            <h2 class="mt-0">盤後籌碼分析</h2>
+            <h2 class="mt-0">盤後籌碼分析已獨立成專頁</h2>
             <p class="text-muted small mb-2">
-                彙整三大法人買賣、融資槓桿、當沖占比、期貨與選擇權法人部位、外資持股比重等專業投資人常參考的收盤後籌碼指標，觀察主力與散戶資金的多空傾向。
+                三大法人買賣金額、外資與投信買賣超排行、融資槓桿與籌碼乾淨度、當沖占比、期貨與選擇權法人部位、大額交易人集中度、外資持股比重等收盤後籌碼指標，已移至獨立的「籌碼分析」單元。
             </p>
-
-            <!-- 三大法人 -->
-            <h3 class="rank-title" id="institutional">三大法人買賣金額統計</h3>
-            <p class="text-muted small mb-2">單位：億元。買賣差額為正代表法人買超（紅），為負代表賣超（綠）。</p>
-            <div class="table-responsive">
-                <table class="table table-bordered results-table mb-0" id="instTable" style="text-align:center;">
-                    <thead class="thead-custom">
-                        <tr>
-                            <th>單位名稱</th>
-                            <th>買進金額</th>
-                            <th>賣出金額</th>
-                            <th>買賣差額</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <!-- 外資 / 投信買賣超 -->
-            <h3 class="rank-title mt-4" id="ranking">外資與投信買賣超排行</h3>
-            <p class="text-muted small mb-2">單位：張（千股）。含 ETF；資料為集中市場（上市）個股。</p>
-            <div class="row">
-                <div class="col-lg-4 col-md-6">
-                    <h4 class="rank-subtitle">外資買超 Top 10</h4>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered results-table rank-table" id="foreignBuyTable">
-                            <thead><tr><th>代號</th><th>名稱</th><th class="text-right">買超(張)</th></tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <h4 class="rank-subtitle">外資賣超 Top 10</h4>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered results-table rank-table" id="foreignSellTable">
-                            <thead><tr><th>代號</th><th>名稱</th><th class="text-right">賣超(張)</th></tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <h4 class="rank-subtitle">投信買超 Top 10</h4>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered results-table rank-table" id="trustBuyTable">
-                            <thead><tr><th>代號</th><th>名稱</th><th class="text-right">買超(張)</th></tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 融資槓桿與當沖 -->
-            <h3 class="rank-title mt-4" id="chips">融資槓桿、當沖占比與籌碼乾淨度</h3>
-            <p class="text-muted small mb-2">
-                「籌碼乾淨」指市場上以融資開槓桿追價的散戶資金少、浮動籌碼有限，上漲較不易遇到停損賣壓。
-                此處以<strong>融資餘額增減</strong>對照大盤漲跌自動判讀；<strong>當沖占比</strong>則反映短線投機資金的活躍程度，占比愈高代表當日籌碼愈浮動。
-            </p>
-            <div id="chipSummary" class="summary-bar" style="display:none;"></div>
-            <p class="text-muted small mt-2 mb-0" id="chipTrendNote"></p>
-            <div id="dayTradingSummary" class="summary-bar" style="display:none;"></div>
-
-            <!-- 期貨與選擇權法人籌碼 -->
-            <h3 class="rank-title mt-4">期貨與選擇權法人籌碼</h3>
-            <p class="text-muted small mb-2">單位：口。多空淨額為正代表法人偏多佈局（紅），為負代表偏空（綠）。</p>
-            <div class="table-responsive">
-                <table class="table table-bordered results-table mb-0" id="futOiTable" style="text-align:center;">
-                    <thead class="thead-custom">
-                        <tr>
-                            <th>契約</th>
-                            <th>身份別</th>
-                            <th>多方未平倉(口)</th>
-                            <th>空方未平倉(口)</th>
-                            <th>多空淨額(口)</th>
-                            <th>當日淨交易(口)</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <p class="text-muted small mt-2 mb-0" id="futNote">期貨部位資料來源：臺灣期貨交易所 OpenAPI。</p>
-
-            <div id="optionsSummary" class="summary-bar mt-3" style="display:none;"></div>
-            <p class="text-muted small mt-2 mb-0" id="pcrNote"></p>
-
-            <h4 class="rank-subtitle mt-3">臺股期貨大額交易人未沖銷部位集中度</h4>
-            <p class="text-muted small mb-2">俗稱「十大交易人／十大特定法人」籌碼集中度，比重愈高代表未平倉部位愈集中在少數大戶手中。</p>
-            <div class="table-responsive">
-                <table class="table table-bordered results-table mb-0" id="largeTraderTable" style="text-align:center;">
-                    <thead class="thead-custom">
-                        <tr>
-                            <th>交易人類別</th>
-                            <th>前5大買方占比</th>
-                            <th>前5大賣方占比</th>
-                            <th>前10大買方占比</th>
-                            <th>前10大賣方占比</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <!-- 外資持股比重 -->
-            <h3 class="rank-title mt-4">外資持股比重</h3>
-            <p class="text-muted small mb-2">依產業別彙總集中市場（上市）外資及陸資持股比率，比率愈高代表該產業對外資動向愈敏感。</p>
-            <div id="foreignHoldingSummary" class="summary-bar" style="display:none;"></div>
-            <div class="table-responsive">
-                <table class="table table-sm table-bordered results-table rank-table mb-0" id="foreignHoldingTable">
-                    <thead><tr><th>產業別</th><th class="text-right">外資及陸資持股比率</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+            <p class="mb-0">👉 前往 <a href="./chips.html"><strong>台股籌碼分析</strong></a> 查看完整盤後籌碼指標。</p>
         </div>
 
         <!-- 熱門族群 -->
@@ -336,30 +238,6 @@
 
     <div class="container">
         <h2 class="mt-2">如何解讀這些市場資訊？</h2>
-        <h3>三大法人買賣超</h3>
-        <p>
-            三大法人指外資（外資及陸資）、投信（本國投資信託基金）與自營商（證券自營商）。法人資金規模大、研究資源多，其買賣動向常被視為市場風向球。外資連續買超通常代表國際資金看好台股；投信買超的中小型股則常有波段行情。
-        </p>
-        <h3>融資餘額與籌碼乾淨度</h3>
-        <p>
-            融資是向券商借錢買股票，是散戶最常用的槓桿工具，因此<strong>融資餘額</strong>常被視為「散戶槓桿水位」。當大盤上漲但融資餘額反而減少，代表上漲由自有資金或法人推動、籌碼乾淨；反之若融資增速超過指數漲幅，代表散戶正在追價開槓桿，籌碼轉髒，一旦回檔容易引發融資斷頭的多殺多賣壓。融券餘額則是看空的借券放空部位，過高時也可能成為軋空的潛在買盤。
-        </p>
-        <h3>外資期貨未平倉部位</h3>
-        <p>
-            外資除了現貨買賣超，也會在台指期貨佈局避險或投機部位。<strong>未平倉口數</strong>代表尚未沖銷的留倉部位：多方口數大於空方（淨額為正）代表外資期貨偏多，反之偏空。觀察外資現貨與期貨方向是否一致，可以判斷其對後市的真實態度——例如現貨買超但期貨大幅淨空單，可能只是避險而非翻空。
-        </p>
-        <h3>當沖占比</h3>
-        <p>
-            當沖（現股當日沖銷）占市場成交比重愈高，代表短線投機資金愈活躍、籌碼愈浮動，行情容易因當沖客同步獲利了結或停損而放大波動；占比偏低則通常代表籌碼相對安定，走勢較不受當日進出資金主導。
-        </p>
-        <h3>選擇權 Put/Call 比與大額交易人集中度</h3>
-        <p>
-            臺指選擇權 <strong>Put/Call 比</strong>（賣權與買權的成交量或未平倉量之比）是市場情緒指標：比值愈高代表市場避險或看空需求較高，過度偏高有時反而是市場過度悲觀的反向訊號；比值愈低則反映市場偏樂觀。<strong>大額交易人未沖銷部位集中度</strong>則揭露台指期貨籌碼有多少比重掌握在前五大、前十大交易人（多為法人與大戶）手中，比重愈高代表籌碼愈集中，這些大戶的多空動向對盤勢影響力也愈大。
-        </p>
-        <h3>外資持股比重</h3>
-        <p>
-            外資及陸資持股比率愈高的產業（例如半導體、其他電子業），股價愈容易受外資買賣超與國際資金流向牽動；持股比重偏低的產業則相對受本土籌碼與內資動向影響較大。留意外資持股較集中的族群，有助於判斷外資調節動向對台股的潛在衝擊。
-        </p>
         <h3>成交量排行（熱門股）</h3>
         <p>
             成交量大代表市場關注度高、流動性佳，進出容易，是當沖交易者選股的重要條件之一。搭配<a href="./">當沖計算機</a>試算損益，並用<a href="./position.html">部位大小計算器</a>控制風險，交易更有紀律。
@@ -379,6 +257,7 @@
 
         <h2>更多免費工具</h2>
         <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">🎯 <a href="./chips.html">台股籌碼分析</a>——三大法人買賣超、融資當沖、期貨選擇權法人部位、外資持股比重</li>
             <li class="list-group-item">🧮 <a href="./">股票當沖計算機</a>——做多／做空損益、手續費與證交稅試算</li>
             <li class="list-group-item">🧮 <a href="./futures.html">台指期貨損益計算機</a>——大台、小台、微台的損益與期交稅試算</li>
             <li class="list-group-item">🛡️ <a href="./position.html">部位大小計算器</a>——用停損價反推該買幾張，控制單筆風險</li>
