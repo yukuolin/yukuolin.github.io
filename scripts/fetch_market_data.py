@@ -33,6 +33,7 @@ from pathlib import Path
 TWSE_RWD = "https://www.twse.com.tw/rwd/zh"
 TPEX_OPENAPI = "https://www.tpex.org.tw/openapi/v1"
 TAIFEX_OPENAPI = "https://openapi.taifex.com.tw/v1"
+FINMIND_API = "https://api.finmindtrade.com/api/v4"
 HEADERS = {"User-Agent": "Mozilla/5.0 (market-data-bot; +https://yukuolin.github.io)"}
 TAIPEI = timezone(timedelta(hours=8))
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -40,6 +41,8 @@ FX_HISTORY_MAX = 60  # 保留最近 60 筆（約三個月）匯率紀錄
 CHIP_HISTORY_MAX = 60  # 保留最近 60 個交易日的籌碼紀錄
 # 籌碼區塊追蹤的台指期貨契約（大台／小台／微台）
 FUT_CONTRACTS = ("臺股期貨", "小型臺指期貨", "微型臺指期貨")
+# FinMind 備援用的契約代碼對照（TaiwanFuturesInstitutionalInvestors 資料集）
+FINMIND_FUT_CONTRACTS = {"TX": "臺股期貨", "MTX": "小型臺指期貨", "TMF": "微型臺指期貨"}
 
 
 def fetch_json(url, retries=2):
@@ -226,13 +229,29 @@ def get_margin(date_str):
 
 
 def get_futures_positions():
-    """期交所三大法人-區分各期貨契約（OpenAPI，僅提供最新交易日）。單位：口。"""
+    """期交所三大法人-區分各期貨契約（單位：口，僅最新交易日）。
+
+    主要來源是 TAIFEX OpenAPI；但該端點近期對 GitHub Actions 的雲端 IP 幾乎必回
+    空 body（本機測試卻正常，研判是境外雲端 IP 被擋，非程式問題），失敗時改用
+    FinMind 的 TaiwanFuturesInstitutionalInvestors 資料集當備援——同樣是官方申報
+    數字的轉載，涵蓋大台/小台/微台（TX/MTX/TMF）與自營商/投信/外資三類。
+    """
+    try:
+        return _get_futures_positions_taifex()
+    except Exception as e:
+        print(f"TAIFEX futures fetch failed, falling back to FinMind: {e}", file=sys.stderr)
+        return _get_futures_positions_finmind()
+
+
+def _get_futures_positions_taifex():
     # 不帶 response=json 時，此端點近期改為預設回傳 CSV（BOM+UTF-8），須明確要求 JSON
     rows = fetch_json(
         f"{TAIFEX_OPENAPI}/MarketDataOfMajorInstitutionalTradersDetailsOfFuturesContractsBytheDate"
         "?response=json"
     )
-    date = rows[0].get("Date") if rows else None
+    if not rows:
+        raise ValueError("empty response")
+    date = rows[0].get("Date")
     out = []
     for r in rows:
         if r.get("ContractCode") not in FUT_CONTRACTS:
@@ -245,7 +264,45 @@ def get_futures_positions():
             "netOI": num(r["OpenInterest(Net)"]),
             "netTrade": num(r["TradingVolume(Net)"]),
         })
+    if not out:
+        raise ValueError("no matching contract rows")
     return date, out
+
+
+def _get_futures_positions_finmind():
+    """FinMind 備援：逐契約抓近 7 日，取三個契約中最新的共同交易日。"""
+    by_contract = {}
+    for fid, contract in FINMIND_FUT_CONTRACTS.items():
+        start = (datetime.now(TAIPEI) - timedelta(days=7)).strftime("%Y-%m-%d")
+        d = fetch_json(f"{FINMIND_API}/data?dataset=TaiwanFuturesInstitutionalInvestors&data_id={fid}&start_date={start}")
+        rows = d.get("data") or []
+        if rows:
+            by_contract[contract] = rows
+
+    if not by_contract:
+        raise ValueError("FinMind futures data also empty")
+
+    date = max(r["date"] for rows in by_contract.values() for r in rows)
+    out = []
+    for contract, rows in by_contract.items():
+        for r in rows:
+            if r.get("date") != date:
+                continue
+            long_oi = num(r.get("long_open_interest_balance_volume"))
+            short_oi = num(r.get("short_open_interest_balance_volume"))
+            long_deal = num(r.get("long_deal_volume"))
+            short_deal = num(r.get("short_deal_volume"))
+            out.append({
+                "contract": contract,
+                "item": r.get("institutional_investors"),
+                "longOI": long_oi,
+                "shortOI": short_oi,
+                "netOI": (long_oi - short_oi) if long_oi is not None and short_oi is not None else None,
+                "netTrade": (long_deal - short_deal) if long_deal is not None and short_deal is not None else None,
+            })
+    if not out:
+        raise ValueError("FinMind futures data has no rows for latest date")
+    return date.replace("-", ""), out
 
 
 def get_day_trading(date_str):
@@ -464,7 +521,7 @@ def main():
     try:
         fut_date, fut_rows = get_futures_positions()
     except Exception as e:
-        print(f"TAIFEX fetch failed: {e}", file=sys.stderr)
+        print(f"Futures positions fetch failed (TAIFEX + FinMind fallback): {e}", file=sys.stderr)
 
     # 盤後籌碼分析新增指標：任一失敗都不應讓主要資料跳過
     day_trading = {"tse": None, "otc": None}

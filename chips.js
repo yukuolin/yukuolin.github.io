@@ -148,7 +148,7 @@
             });
         }
 
-        // 外資台指期（大台）淨未平倉
+        // 外資台指期（大台）淨未平倉：淨額／多方／空方／今日增減分開列示，方便一眼看多空與變化方向
         var rows = fut.rows || [];
         var fBig = null;
         for (var i = 0; i < rows.length; i++) {
@@ -158,9 +158,29 @@
             cards.push({
                 label: "外資台指期淨未平倉",
                 value: signed(fBig.netOI, 0) + " 口",
-                note: "做多 " + fmt(fBig.longOI, 0) + " 口／做空 " + fmt(fBig.shortOI, 0) + " 口",
+                note: (fBig.netOI >= 0 ? "淨多單" : "淨空單") + "／做多 " + fmt(fBig.longOI, 0) + " 口・做空 " + fmt(fBig.shortOI, 0) + " 口",
                 cls: colorClass(fBig.netOI)
             });
+            cards.push({
+                label: "外資台指期淨多單（多方未平倉）",
+                value: fmt(fBig.longOI, 0) + " 口",
+                note: "外資實際做多的留倉口數",
+                cls: ""
+            });
+            cards.push({
+                label: "外資台指期淨空單（空方未平倉）",
+                value: fmt(fBig.shortOI, 0) + " 口",
+                note: "外資實際做空的留倉口數",
+                cls: ""
+            });
+            if (fBig.netTrade !== null && fBig.netTrade !== undefined) {
+                cards.push({
+                    label: "外資台指期今日增減",
+                    value: signed(fBig.netTrade, 0) + " 口",
+                    note: fBig.netTrade > 0 ? "今日轉多／回補空單" : (fBig.netTrade < 0 ? "今日轉空／獲利了結多單" : "今日部位無變化"),
+                    cls: colorClass(fBig.netTrade)
+                });
+            }
         }
 
         summaryCards(document.getElementById("chipSummary"), cards);
