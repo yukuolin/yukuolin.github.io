@@ -62,6 +62,14 @@ body {
     background-color: rgba(255, 255, 255, 0.10);
 }
 
+/* 桌機寬度下項目較多，縮小左右間距讓導覽列維持一行 */
+@media (min-width: 992px) and (max-width: 1439.98px) {
+    .navbar-dark .navbar-nav .nav-link {
+        padding-left: 0.6rem;
+        padding-right: 0.6rem;
+    }
+}
+
 /* ---------- 導覽列下拉選單（市場焦點快速連結） ---------- */
 html {
     scroll-behavior: smooth;

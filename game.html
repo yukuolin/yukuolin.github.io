@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股海盲測｜用真實歷史股價練習投資的模擬交易遊戲</title>
+    <meta name="description" content="免費股票模擬交易小遊戲：隱藏股票名稱與日期，用台積電、輝達、長榮等真實歷史行情練習買賣判斷，結束後揭曉答案並與買入持有策略比較，適合投資新手。">
+    <meta name="keywords" content="股票模擬遊戲, 模擬交易, 股票遊戲, 投資新手, K線練習, 歷史股價, 買入持有, 台股">
+    <meta name="author" content="Yukuo Lin">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://yukuolin.github.io/game.html">
+
+    <!-- Social Media Integration -->
+    <meta property="og:title" content="股海盲測｜用真實歷史股價練習投資的模擬交易遊戲">
+    <meta property="og:description" content="隱藏股票名稱與日期，用真實歷史行情練習買賣判斷，結束後揭曉答案。你能打敗買入持有嗎？">
+    <meta property="og:url" content="https://yukuolin.github.io/game.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="台股當沖計算機">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:image" content="https://yukuolin.github.io/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="股海盲測｜用真實歷史股價練習投資的模擬交易遊戲">
+    <meta name="twitter:description" content="隱藏股票名稱與日期，用真實歷史行情練習買賣判斷，結束後揭曉答案。你能打敗買入持有嗎？">
+    <meta name="twitter:image" content="https://yukuolin.github.io/assets/og-image.png">
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="game/game.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
+
+    <!-- google ad -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3630139872305550"
+        crossorigin="anonymous"></script>
+
+    <!-- Structured Data for Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "股海盲測",
+      "description": "用真實歷史股價練習投資判斷的模擬交易小遊戲，隱藏股票名稱與日期，結束後揭曉答案。",
+      "url": "https://yukuolin.github.io/game.html",
+      "inLanguage": "zh-Hant",
+      "genre": "Simulation",
+      "gamePlatform": "Web browser",
+      "applicationCategory": "Game",
+      "operatingSystem": "Web",
+      "author": {
+        "@type": "Person",
+        "name": "Yukuo Lin"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TWD"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "首頁",
+        "item": "https://yukuolin.github.io/"
+      }, {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "股海盲測",
+        "item": "https://yukuolin.github.io/game.html"
+      }]
+    }
+    </script>
+</head>
+
+<body role="document">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <a class="navbar-brand" href="./">股票當沖計算機</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="./">當沖計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./futures.html">期貨計算機</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./position.html">部位大小</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="./market.html" id="marketMenu" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">市場焦點</a>
+                    <div class="dropdown-menu market-menu" aria-labelledby="marketMenu">
+                        <a class="dropdown-item" href="./market.html">📊 市場焦點總覽</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="./market.html#market-summary">大盤摘要卡</a>
+                        <a class="dropdown-item" href="./market.html#sectors">當日熱門族群</a>
+                        <a class="dropdown-item" href="./market.html#hot-stocks">成交量前二十熱門股</a>
+                        <a class="dropdown-item" href="./market.html#fx">台幣匯率變化</a>
+                        <a class="dropdown-item" href="./market.html#events">經濟事件日曆</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="./chips.html" id="chipsMenu" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">籌碼分析</a>
+                    <div class="dropdown-menu market-menu" aria-labelledby="chipsMenu">
+                        <a class="dropdown-item" href="./chips.html">📊 籌碼分析總覽</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="./chips.html#institutional">三大法人買賣金額</a>
+                        <a class="dropdown-item" href="./chips.html#ranking">外資／投信買賣超 Top 10</a>
+                        <a class="dropdown-item" href="./chips.html#margin">融資槓桿與當沖占比</a>
+                        <a class="dropdown-item" href="./chips.html#futures-options">期貨與選擇權法人籌碼</a>
+                        <a class="dropdown-item" href="./chips.html#foreign-holding">外資持股比重</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./stock.html">個股查詢</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="./game.html">股海盲測</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./freshmen.html">新手投資建議</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./risk.html">投資風險</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./caculation.html">手續費與證交稅</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <h1 class="mb-2">股海盲測：歷史行情模擬交易遊戲</h1>
+        <p class="lead">股票名稱與日期全部隱藏，用<span class="accent">真實歷史股價</span>練習買賣，看看你能不能打敗「買了就不動」</p>
+    </header>
+
+    <div class="container">
+        <!-- ===== 遊戲本體（Vue 掛載點） ===== -->
+        <div id="stock-game" class="sg" v-cloak>
+
+            <!-- 選擇關卡 -->
+            <div v-if="screen === 'menu'">
+                <div class="sg-intro">
+                    <p>起始資金 {{ fmtMoney(START_CASH) }}（虛擬貨幣），每關都是一段真實的歷史行情。</p>
+                    <p class="sg-muted sg-small">完成關卡後才會揭曉該關的名稱。</p>
+                </div>
+
+                <div class="sg-cards">
+                    <button v-for="(s, idx) in scenarios" :key="s.id" class="sg-card" @click="startGame(s)">
+                        <div class="sg-card-top">
+                            <span class="sg-stars">{{ '★'.repeat(s.difficulty) }}{{ '☆'.repeat(3 - s.difficulty) }}</span>
+                            <span v-if="records[s.id] !== undefined" class="sg-badge">最佳 {{ fmtPct(records[s.id]) }}</span>
+                        </div>
+                        <div class="sg-card-title">{{ records[s.id] !== undefined ? s.title : '神秘關卡 #' + (idx + 1) }}</div>
+                        <p class="sg-card-teaser">{{ s.teaser }}</p>
+                        <div class="sg-card-foot">約 {{ s.bars.length - s.warmup }} 個交易日</div>
+                    </button>
+                </div>
+
+                <div class="sg-howto">
+                    <h2>怎麼玩？</h2>
+                    <ol>
+                        <li>畫面會先給你一段歷史走勢，接著每按一次「下一天」就多看到一根 K 線。</li>
+                        <li>用「買進／賣出」按鈕交易，成交價是<strong>當天收盤價</strong>，並會扣手續費與證交稅（和台股相同）。</li>
+                        <li>途中會跳出當時的真實新聞，想想看它對股價有什麼影響。</li>
+                        <li>走到最後一天（或提前結算）就會揭曉是哪檔股票，並和「買入持有」比較成績。</li>
+                    </ol>
+                    <button class="sg-link" @click="showGlossary = true">📖 新手名詞解釋</button>
+                </div>
+            </div>
+
+            <!-- 遊戲進行中 -->
+            <div v-else-if="screen === 'play'">
+                <div class="sg-topbar">
+                    <button class="sg-ghost" @click="backToMenu">← 選關</button>
+                    <div class="sg-day">第 <strong>{{ dayNum }}</strong> / {{ totalDays }} 天</div>
+                    <div class="sg-progress"><div :style="{ width: (dayNum / totalDays * 100) + '%' }"></div></div>
+                    <button class="sg-ghost" @click="showGlossary = true">📖 名詞</button>
+                </div>
+
+                <div class="sg-layout">
+                    <section class="sg-panel">
+                        <div class="sg-legend">
+                            <span>收盤 <strong :class="changeClass">{{ price.toFixed(2) }}</strong></span>
+                            <span :class="changeClass">{{ dayChange >= 0 ? '▲' : '▼' }} {{ Math.abs(dayChange * 100).toFixed(2) }}%</span>
+                            <label v-for="m in MA_LIST" :key="m.n" class="sg-ma-toggle" :style="{ color: m.color }">
+                                <input type="checkbox" v-model="maOn[m.n]" @change="refreshMA"> MA{{ m.n }}
+                            </label>
+                        </div>
+                        <div ref="chartEl" class="sg-chart"></div>
+
+                        <div class="sg-controls">
+                            <button class="sg-primary" @click="nextDay(1)" :disabled="isEnd">下一天 <kbd>空白鍵</kbd></button>
+                            <button @click="nextDay(5)" :disabled="isEnd">快轉 5 天</button>
+                            <button @click="toggleAuto" :disabled="isEnd" :class="{ 'sg-active': autoTimer }">{{ autoTimer ? '⏸ 暫停' : '▶ 自動播放' }}</button>
+                            <button :class="isEnd ? 'sg-primary sg-pulse' : 'sg-ghost'" @click="finish">{{ isEnd ? '🎉 查看結果' : '提前結算' }}</button>
+                        </div>
+                    </section>
+
+                    <aside class="sg-side">
+                        <div class="sg-panel">
+                            <div class="sg-total">
+                                <div class="sg-muted">總資產</div>
+                                <div class="sg-big">{{ fmtMoney(equity) }}</div>
+                                <div :class="pnlClass(returnPct)">{{ fmtPct(returnPct) }}</div>
+                            </div>
+                            <dl class="sg-stats">
+                                <dt>現金</dt><dd>{{ fmtMoney(cash) }}</dd>
+                                <dt>持有股數</dt><dd>{{ shares.toLocaleString() }} 股</dd>
+                                <dt>持股市值</dt><dd>{{ fmtMoney(shares * price) }}</dd>
+                                <dt>平均成本</dt><dd>{{ shares ? avgCost.toFixed(2) : '—' }}</dd>
+                                <dt>未實現損益</dt><dd :class="pnlClass(unrealized)">{{ shares ? fmtMoney(unrealized) : '—' }}</dd>
+                                <dt>買入持有 <span class="sg-tip" title="如果第一天就全部買進、之後都不動，現在的報酬率">?</span></dt>
+                                <dd :class="pnlClass(holdReturn)">{{ fmtPct(holdReturn) }}</dd>
+                            </dl>
+                        </div>
+
+                        <div class="sg-panel sg-trade">
+                            <div class="sg-trade-row">
+                                <span class="sg-label sg-buy">買進</span>
+                                <button v-for="p in [0.25, 0.5, 1]" :key="'b' + p" class="sg-buy" @click="buy(p)" :disabled="maxBuyShares(p) <= 0">
+                                    {{ p === 1 ? '全部' : p * 100 + '%' }}
+                                </button>
+                            </div>
+                            <div class="sg-trade-row">
+                                <span class="sg-label sg-sell">賣出</span>
+                                <button v-for="p in [0.25, 0.5, 1]" :key="'s' + p" class="sg-sell" @click="sell(p)" :disabled="shares <= 0">
+                                    {{ p === 1 ? '全部' : p * 100 + '%' }}
+                                </button>
+                            </div>
+                            <p class="sg-muted sg-small mb-0">買進：可用現金的比例｜賣出：持股的比例<br>手續費 0.1425%，賣出另收證交稅 0.3%</p>
+                        </div>
+
+                        <div class="sg-panel sg-news">
+                            <h3>📰 新聞</h3>
+                            <p v-if="!news.length" class="sg-muted sg-small mb-0">目前沒有重大消息。</p>
+                            <ul>
+                                <li v-for="n in news" :key="n.day" :class="{ 'sg-fresh': n.day === dayNum }">
+                                    <span class="sg-news-day">第 {{ n.day }} 天</span>{{ n.text }}
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="sg-panel sg-log" v-if="trades.length">
+                            <h3>交易紀錄</h3>
+                            <ul>
+                                <li v-for="(t, i) in trades.slice().reverse()" :key="i">
+                                    <span :class="'sg-' + t.type">{{ t.type === 'buy' ? '買' : '賣' }}</span>
+                                    第 {{ t.day }} 天｜{{ t.shares.toLocaleString() }} 股 @ {{ t.price.toFixed(2) }}
+                                </li>
+                            </ul>
+                        </div>
+                    </aside>
+                </div>
+
+                <div v-if="toast" class="sg-toast" @click="toast = null">
+                    <div class="sg-toast-title">📰 重大新聞</div>
+                    <div>{{ toast }}</div>
+                    <div class="sg-muted sg-small">（點擊關閉）</div>
+                </div>
+            </div>
+
+            <!-- 結算 -->
+            <div v-else-if="screen === 'result'" class="sg-result">
+                <div class="sg-reveal">
+                    <div class="sg-muted">這檔股票是……</div>
+                    <div class="sg-reveal-name">{{ scenario.name }}</div>
+                    <div class="sg-period">{{ scenario.title }}｜{{ result.startDate }} ～ {{ result.endDate }}</div>
+                    <div class="sg-muted sg-small">
+                        實際股價：{{ result.realStart }} → {{ result.realEnd }} {{ scenario.currency }}（已還原權息）
+                    </div>
+                </div>
+
+                <div class="sg-grade" :class="'sg-g-' + result.grade">
+                    <div class="sg-grade-letter">{{ result.grade }}</div>
+                    <div>{{ result.comment }}</div>
+                </div>
+
+                <div class="sg-result-grid">
+                    <div class="sg-metric"><div class="sg-muted">你的報酬率</div><div class="sg-big" :class="pnlClass(result.ret)">{{ fmtPct(result.ret) }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">買入持有報酬率</div><div class="sg-big" :class="pnlClass(result.hold)">{{ fmtPct(result.hold) }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">最大回撤 <span class="sg-tip" title="資產從最高點往下跌的最大幅度，代表你承受過的最痛時刻">?</span></div><div class="sg-big">{{ fmtPct(-result.mdd) }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">交易次數</div><div class="sg-big">{{ trades.length }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">手續費＋稅</div><div class="sg-big">{{ fmtMoney(result.costs) }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">最終資產</div><div class="sg-big">{{ fmtMoney(equity) }}</div></div>
+                </div>
+
+                <section class="sg-panel">
+                    <h3>資產走勢：你 vs. 買入持有</h3>
+                    <div ref="resultChartEl" class="sg-chart sg-small-chart"></div>
+                    <div class="sg-legend-row"><span class="sg-dot sg-you"></span>你的資產 <span class="sg-dot sg-hold"></span>買入持有</div>
+                </section>
+
+                <section class="sg-panel sg-story">
+                    <h3>📖 當時發生了什麼？</h3>
+                    <p>{{ scenario.story }}</p>
+                    <h3>💡 這關的教訓</h3>
+                    <p class="mb-0">{{ scenario.lesson }}</p>
+                </section>
+
+                <div class="sg-controls sg-center">
+                    <button class="sg-primary" @click="startGame(scenario)">再玩一次</button>
+                    <button @click="backToMenu">選其他關卡</button>
+                </div>
+            </div>
+
+            <!-- 名詞解釋 -->
+            <div v-if="showGlossary" class="sg-modal-bg" @click.self="showGlossary = false">
+                <div class="sg-modal">
+                    <button class="sg-close" @click="showGlossary = false">✕</button>
+                    <h2>📖 新手名詞解釋</h2>
+                    <dl class="sg-glossary">
+                        <template v-for="g in GLOSSARY" :key="g[0]">
+                            <dt>{{ g[0] }}</dt><dd>{{ g[1] }}</dd>
+                        </template>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="mt-2">為什麼要玩股海盲測？</h2>
+        <p>
+            看歷史走勢圖時，我們總覺得「當時在低點買進就好了」，但真正身處其中時，沒有人知道明天會漲還是跌。股海盲測把股票名稱和日期藏起來，讓你像當時的投資人一樣，只能根據已經發生的走勢和新聞做決定，親身體會恐慌、貪婪與猶豫。
+        </p>
+
+        <h2>新手常見的三個錯誤</h2>
+        <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">😱 <strong>恐慌殺低：</strong>大跌時忍不住賣出，結果錯過之後的反彈。</li>
+            <li class="list-group-item">🤑 <strong>追高殺低：</strong>看到大漲才追進，買在情緒最熱的高點。</li>
+            <li class="list-group-item">🔁 <strong>過度交易：</strong>頻繁進出，手續費與證交稅吃掉大部分獲利。</li>
+        </ul>
+        <p class="mt-3 text-muted">本遊戲的股價資料來自真實歷史行情並已還原權息，僅供教育與娛樂用途，不構成任何投資建議。</p>
+
+        <h2>延伸閱讀</h2>
+        <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item"><a href="./freshmen.html">給新手投資人的 10 大建議</a></li>
+            <li class="list-group-item"><a href="./risk.html">股票投資風險與策略深度剖析</a></li>
+            <li class="list-group-item"><a href="./caculation.html">手續費及證交稅的計算方式</a></li>
+            <li class="list-group-item"><a href="./position.html">部位大小計算器：用停損價反推該買幾張</a></li>
+        </ul>
+    </div>
+
+    <footer class="footer">
+        <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
+        <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
+    </footer>
+
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="game/scenarios.js"></script>
+    <script src="game/game.js"></script>
+</body>
+
+</html>
