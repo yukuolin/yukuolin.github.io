@@ -31,12 +31,21 @@ $(document).ready(function () {
         interval = getInterval(buyPrice);
 
         allResults = [];
-        currentResultsCount = 11;
 
-        for (let i = -5; i <= 6; i++) {
-            const sellPrice = round2(buyPrice + (i * interval));
-            allResults.push(calculateResult(sellPrice));
+        allResults.push(calculateResult(buyPrice));
+        let price = buyPrice;
+        for (let i = 0; i < 5; i++) {
+            price = prevTick(price);
+            if (price <= 0) break;
+            allResults.unshift(calculateResult(price));
         }
+        price = buyPrice;
+        for (let i = 0; i < 6; i++) {
+            price = nextTick(price);
+            allResults.push(calculateResult(price));
+        }
+
+        currentResultsCount = allResults.length;
 
         displaySummary();
         displayResults();
@@ -52,12 +61,29 @@ $(document).ready(function () {
         addMoreResults('bottom');
     });
 
+    // 依輸入的股價調整上下箭頭的跳動單位，與實際升降單位一致
+    $('#buyPrice').on('input', function () {
+        const price = parseFloat($(this).val());
+        $(this).attr('step', price > 0 ? getInterval(price) : 0.01);
+    });
+
     function getInterval(price) {
+        if (price < 10) return 0.01;
         if (price < 50) return 0.05;
         if (price < 100) return 0.1;
         if (price < 500) return 0.5;
         if (price < 1000) return 1;
         return 5;
+    }
+
+    // 逐檔移動價格，跨過級距時自動換成新的跳動單位
+    function nextTick(price) {
+        return round2(price + getInterval(price));
+    }
+
+    function prevTick(price) {
+        // 往下跳一檔時，檔位間距要以低於現價的區間為準
+        return round2(price - getInterval(price - 0.0001));
     }
 
     function round2(num) {
@@ -111,10 +137,9 @@ $(document).ready(function () {
         let ticks = 0;
         for (let i = 0; i < 2000; i++) {
             if (strategy === 'long') {
-                price = round2(price + getInterval(price));
+                price = nextTick(price);
             } else {
-                // 往下跳一檔時，檔位間距要以低於現價的區間為準
-                price = round2(price - getInterval(price - 0.0001));
+                price = prevTick(price);
                 if (price <= 0) return null;
             }
             ticks++;
@@ -148,20 +173,23 @@ $(document).ready(function () {
         let newResults = [];
         if (position === 'top') {
             lastResultPrice = parseFloat(allResults[0].match(/<td>([\d.]+)<\/td>/)[1]);
+            let newPrice = lastResultPrice;
             for (let i = 1; i <= 5; i++) {
-                const newPrice = round2(lastResultPrice - (i * interval));
+                newPrice = prevTick(newPrice);
+                if (newPrice <= 0) break;
                 newResults.unshift(calculateResult(newPrice));
             }
             allResults = newResults.concat(allResults);
         } else {
             lastResultPrice = parseFloat(allResults[allResults.length - 1].match(/<td>([\d.]+)<\/td>/)[1]);
+            let newPrice = lastResultPrice;
             for (let i = 1; i <= 5; i++) {
-                const newPrice = round2(lastResultPrice + (i * interval));
+                newPrice = nextTick(newPrice);
                 newResults.push(calculateResult(newPrice));
             }
             allResults = allResults.concat(newResults);
         }
-        currentResultsCount += 5;
+        currentResultsCount += newResults.length;
         displayResults();
     }
 
@@ -192,5 +220,6 @@ $(document).ready(function () {
     $('#discount').val(saved && saved.discount ? saved.discount : 2.8);
     $('#strategy').val(saved && saved.strategy ? saved.strategy : 'long');
     $('#isDayTrading').prop('checked', saved ? saved.isDayTrading !== false : true);
+    $('#buyPrice').trigger('input');
     $('#stockForm').submit();
 });
