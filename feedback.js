@@ -1,15 +1,16 @@
-// 問題回報：右下角按鈕 + 頁尾連結，透過 FormSubmit 寄到站長信箱
+// 問題回報：導覽列（漢堡選單）項目 + 頁尾連結，透過 FormSubmit 寄到站長信箱
 (function () {
     const FEEDBACK_EMAIL = 'second2f@gmail.com';
     const ENDPOINT = 'https://formsubmit.co/ajax/' + FEEDBACK_EMAIL;
 
     function init() {
-        const fab = document.createElement('button');
-        fab.type = 'button';
-        fab.className = 'feedback-fab';
-        fab.setAttribute('aria-label', '回報問題');
-        fab.textContent = '回報問題';
-        document.body.appendChild(fab);
+        const nav = document.querySelector('.navbar-nav');
+        if (nav) {
+            const li = document.createElement('li');
+            li.className = 'nav-item';
+            li.innerHTML = '<a class="nav-link feedback-link" href="#">回報問題</a>';
+            nav.appendChild(li);
+        }
 
         const footer = document.querySelector('.footer');
         if (footer) {
@@ -68,7 +69,6 @@
             overlay.hidden = true;
         }
 
-        fab.addEventListener('click', open);
         document.querySelectorAll('.feedback-link').forEach(function (a) {
             a.addEventListener('click', open);
         });
