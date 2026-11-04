@@ -45,6 +45,10 @@ FUT_CONTRACTS = ("臺股期貨", "小型臺指期貨", "微型臺指期貨")
 FINMIND_FUT_CONTRACTS = {"TX": "臺股期貨", "MTX": "小型臺指期貨", "TMF": "微型臺指期貨"}
 
 
+class SourceNotReady(Exception):
+    """證交所回「很抱歉，沒有符合條件的資料」：當日資料尚未公布，重試也沒用。"""
+
+
 def fetch_json(url, retries=2):
     """抓 JSON。證交所 rwd 有 5 秒 5 次的流量限制，每次請求後強制間隔。"""
     for attempt in range(retries + 1):
@@ -56,8 +60,12 @@ def fetch_json(url, retries=2):
                 time.sleep(3)
             # rwd 被限流時會回 stat 非 OK 或空資料
             if isinstance(data, dict) and data.get("stat") not in (None, "OK"):
+                if "沒有符合條件" in str(data.get("stat")):
+                    raise SourceNotReady(f"{url} stat={data.get('stat')}")
                 raise ValueError(f"stat={data.get('stat')}")
             return data
+        except SourceNotReady:
+            raise
         except Exception:
             if attempt == retries:
                 raise
@@ -97,6 +105,16 @@ def sign_of(s):
     return -1 if text == "-" else (1 if text == "+" else 0)
 
 
+def find_table(d, *fields, title=None):
+    """依欄位名稱（及標題關鍵字）找出 rwd 回應中的資料表，並回傳 (table, 欄位索引對照)。
+    不寫死 tables[n]，證交所增減資料表時才不會靜默拿錯表。"""
+    for t in d.get("tables") or []:
+        f = t.get("fields") or []
+        if all(x in f for x in fields) and (title is None or title in (t.get("title") or "")):
+            return t, {name: i for i, name in enumerate(f)}
+    raise ValueError(f"找不到含欄位 {fields}（標題含 {title}）的資料表")
+
+
 def fetch_allbut0999():
     """證交所盤後資訊「每日收盤行情」整合端點：一次取得大盤/類股指數、
     大盤統計與全部個股當日成交資訊（含本益比）。省略 date 參數會自動回傳
@@ -110,14 +128,16 @@ def parse_indices(d):
     date = d.get("date")
     taiex = None
     sectors = []
-    for r in d["tables"][0]["data"]:
-        name = r[0].strip()
-        close = num(r[1])
+    table, c = find_table(d, "指數", "收盤指數", "漲跌(+/-)", "漲跌點數", "漲跌百分比(%)",
+                          title="價格指數(臺灣證券交易所)")
+    for r in table["data"]:
+        name = r[c["指數"]].strip()
+        close = num(r[c["收盤指數"]])
         if close is None:
             continue
-        sign = sign_of(r[2])
-        change = (num(r[3]) or 0) * sign
-        change_pct = num(r[4])  # 此欄位本身已帶正負號
+        sign = sign_of(r[c["漲跌(+/-)"]])
+        change = (num(r[c["漲跌點數"]]) or 0) * sign
+        change_pct = num(r[c["漲跌百分比(%)"]])  # 此欄位本身已帶正負號
         item = {"name": name, "close": close, "change": change, "changePct": change_pct}
         if name == "發行量加權股價指數":
             taiex = item
@@ -168,8 +188,6 @@ def get_hot_stocks():
 def get_t86(date_str):
     """三大法人買賣超日報（個股，單位：股，帶明確日期）→ 排行榜與個股查詢用的對照表。"""
     d = fetch_json(f"{TWSE_RWD}/fund/T86?response=json&date={date_str}&selectType=ALL")
-    if d.get("stat") != "OK":
-        return [], [], [], {}
     fields = d["fields"]
 
     def find_field(*keywords, exclude=()):
@@ -235,12 +253,14 @@ def get_futures_positions():
     空 body（本機測試卻正常，研判是境外雲端 IP 被擋，非程式問題），失敗時改用
     FinMind 的 TaiwanFuturesInstitutionalInvestors 資料集當備援——同樣是官方申報
     數字的轉載，涵蓋大台/小台/微台（TX/MTX/TMF）與自營商/投信/外資三類。
+
+    回傳 (資料日期, rows, 來源名稱)，來源會顯示在前端，讓使用者知道實際引用哪一份資料。
     """
     try:
-        return _get_futures_positions_taifex()
+        return _get_futures_positions_taifex() + ("臺灣期貨交易所 OpenAPI",)
     except Exception as e:
         print(f"TAIFEX futures fetch failed, falling back to FinMind: {e}", file=sys.stderr)
-        return _get_futures_positions_finmind()
+        return _get_futures_positions_finmind() + ("FinMind（轉載期交所公布資料）",)
 
 
 def _get_futures_positions_taifex():
@@ -411,17 +431,20 @@ def build_stocks(allbut0999):
     """
     stocks = {}
 
-    # 上市：每日收盤行情（ALLBUT0999 最後一張表，已含本益比）
+    # 上市：每日收盤行情（ALLBUT0999 的「每日收盤行情」表，已含本益比）
     date = allbut0999.get("date")
-    quote_table = allbut0999["tables"][8]
+    quote_table, c = find_table(
+        allbut0999, "證券代號", "證券名稱", "成交股數", "成交筆數", "成交金額",
+        "開盤價", "最高價", "最低價", "收盤價", "漲跌(+/-)", "漲跌價差",
+    )
     for r in quote_table["data"]:
-        code = r[0].strip()
-        sign = sign_of(r[9])
-        change = (num(r[10]) or 0) * sign
+        code = r[c["證券代號"]].strip()
+        sign = sign_of(r[c["漲跌(+/-)"]])
+        change = (num(r[c["漲跌價差"]]) or 0) * sign
         stocks[code] = [
-            r[1].strip(), "tse", num(r[8]), change,
-            num(r[5]), num(r[6]), num(r[7]),
-            num(r[2]), num(r[3]), num(r[4]),
+            r[c["證券名稱"]].strip(), "tse", num(r[c["收盤價"]]), change,
+            num(r[c["開盤價"]]), num(r[c["最高價"]]), num(r[c["最低價"]]),
+            num(r[c["成交股數"]]), num(r[c["成交筆數"]]), num(r[c["成交金額"]]),
             None, None, None,
             None, None, None,
         ]
@@ -491,6 +514,71 @@ def get_fx(history):
     return history, today
 
 
+def write_if_changed(path, obj):
+    """內容（不含 updatedAt）與現有檔案相同時不重寫，避免每次排程都產生 commit。"""
+    text = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    try:
+        old = json.loads(path.read_text(encoding="utf-8"))
+        new = json.loads(text)  # 經過一次序列化，tuple/list 等型別差異才不會誤判
+        old.pop("updatedAt", None)
+        new.pop("updatedAt", None)
+        if old == new:
+            return False
+    except (OSError, ValueError):
+        pass
+    path.write_text(text, encoding="utf-8")
+    return True
+
+
+SITEMAP_PATH = Path(__file__).resolve().parent.parent / "sitemap.xml"
+# 內容隨每日資料變動的頁面，資料有更新時一併更新 sitemap 的 lastmod
+DATA_PAGES = ("market.html", "chips.html", "stock.html")
+
+
+def update_sitemap_lastmod(date):
+    """把每日資料頁在 sitemap.xml 的 lastmod 設為資料日期（YYYYMMDD → YYYY-MM-DD）。"""
+    try:
+        with open(SITEMAP_PATH, encoding="utf-8", newline="") as f:
+            xml = f.read()
+    except OSError:
+        return
+    day = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
+    for page in DATA_PAGES:
+        xml = re.sub(
+            rf"(<loc>https://yukuolin\.github\.io/{re.escape(page)}</loc>\s*<lastmod>)[^<]*(</lastmod>)",
+            rf"\g<1>{day}\g<2>", xml,
+        )
+    with open(SITEMAP_PATH, "w", encoding="utf-8", newline="") as f:
+        f.write(xml)
+
+
+def write_stock_files(date, updated_at, stocks):
+    """個股資料拆成輕量索引 + 依代號首字分片，個股查詢頁不必每次下載全部 2000 多檔明細。
+
+    - stock-index.json：{date, updatedAt, stocks: {代號: [名稱, 市場]}}，供搜尋自動完成
+    - stocks/<代號首字>.json：{date, stocks: {代號: 完整欄位}}，欄位格式同 build_stocks()
+    回傳有被重寫的檔案數。
+    """
+    written = 0
+    index = {code: row[:2] for code, row in stocks.items()}
+    written += write_if_changed(
+        DATA_DIR / "stock-index.json", {"date": date, "updatedAt": updated_at, "stocks": index}
+    )
+    shard_dir = DATA_DIR / "stocks"
+    shard_dir.mkdir(exist_ok=True)
+    shards = {}
+    for code, row in stocks.items():
+        shards.setdefault(code[0], {})[code] = row
+    for key, rows in shards.items():
+        written += write_if_changed(shard_dir / f"{key}.json", {"date": date, "stocks": rows})
+    # 已不再有任何代號開頭的舊分片要移除，避免前端讀到過期資料
+    for path in shard_dir.glob("*.json"):
+        if path.stem not in shards:
+            path.unlink()
+            written += 1
+    return written
+
+
 def main():
     DATA_DIR.mkdir(exist_ok=True)
 
@@ -511,17 +599,29 @@ def main():
     # 個股行情（含上市/上櫃）
     stocks_date, stocks_raw = build_stocks(allbut0999)
 
+    # 同一資料日已有完整資料時，本次失敗的籌碼區塊沿用舊值，避免被 None 蓋掉
+    market_path = DATA_DIR / "market.json"
+    try:
+        prev_market = json.loads(market_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        prev_market = {}
+    prev_chips = prev_market.get("chips", {}) if prev_market.get("dataDate") == stocks_date else {}
+
     # 籌碼面：信用交易彙總與期貨法人部位，任一來源失敗不應讓主要資料也失敗
     margin = None
     try:
         margin = get_margin(stocks_date)
     except Exception as e:
         print(f"MI_MARGN fetch failed: {e}", file=sys.stderr)
-    fut_date, fut_rows = None, []
+    margin = margin or prev_chips.get("margin")
+    fut_date, fut_rows, fut_source = None, [], None
     try:
-        fut_date, fut_rows = get_futures_positions()
+        fut_date, fut_rows, fut_source = get_futures_positions()
     except Exception as e:
         print(f"Futures positions fetch failed (TAIFEX + FinMind fallback): {e}", file=sys.stderr)
+    prev_fut = prev_chips.get("futures") or {}
+    if not fut_rows and prev_fut.get("rows"):
+        fut_date, fut_rows, fut_source = prev_fut.get("date"), prev_fut["rows"], prev_fut.get("source")
 
     # 盤後籌碼分析新增指標：任一失敗都不應讓主要資料跳過
     day_trading = {"tse": None, "otc": None}
@@ -529,21 +629,27 @@ def main():
         day_trading = get_day_trading(stocks_date)
     except Exception as e:
         print(f"Day-trading fetch failed: {e}", file=sys.stderr)
+    prev_dt = prev_chips.get("dayTrading") or {}
+    for k in ("tse", "otc"):
+        day_trading[k] = day_trading.get(k) or prev_dt.get(k)
     put_call_ratio = None
     try:
         put_call_ratio = get_put_call_ratio()
     except Exception as e:
         print(f"PutCallRatio fetch failed: {e}", file=sys.stderr)
+    put_call_ratio = put_call_ratio or prev_chips.get("putCallRatio")
     large_traders = None
     try:
         large_traders = get_large_traders()
     except Exception as e:
         print(f"OpenInterestOfLargeTradersFutures fetch failed: {e}", file=sys.stderr)
+    large_traders = large_traders or prev_chips.get("largeTraders")
     foreign_holding = None
     try:
         foreign_holding = get_foreign_holding(stocks_date)
     except Exception as e:
         print(f"MI_QFIIS_cat fetch failed: {e}", file=sys.stderr)
+    foreign_holding = foreign_holding or prev_chips.get("foreignHolding")
 
     chip_path = DATA_DIR / "chip_history.json"
     try:
@@ -595,7 +701,7 @@ def main():
         "trustBuy": trust_buy,
         "chips": {
             "margin": margin,
-            "futures": {"date": fut_date, "rows": fut_rows},
+            "futures": {"date": fut_date, "rows": fut_rows, "source": fut_source},
             "history": chip_history,
             "dayTrading": day_trading,
             "putCallRatio": put_call_ratio,
@@ -605,9 +711,9 @@ def main():
         "fx": {"latest": fx_today, "history": fx_history},
     }
 
-    (DATA_DIR / "market.json").write_text(
-        json.dumps(market, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
-    )
+    market_written = write_if_changed(market_path, market)
+    if market_written:
+        update_sitemap_lastmod(stocks_date)
     fx_path.write_text(
         json.dumps(fx_history, ensure_ascii=False, indent=1), encoding="utf-8"
     )
@@ -616,19 +722,18 @@ def main():
             json.dumps(chip_history, ensure_ascii=False, indent=1), encoding="utf-8"
         )
 
-    (DATA_DIR / "stocks.json").write_text(
-        json.dumps(
-            {"date": stocks_date, "updatedAt": market["updatedAt"], "stocks": stocks_raw},
-            ensure_ascii=False, separators=(",", ":"),
-        ),
-        encoding="utf-8",
-    )
+    stocks_written = write_stock_files(stocks_date, market["updatedAt"], stocks_raw)
 
     print(f"OK dataDate={market['dataDate']} sectors={len(sectors)} "
           f"hot={len(hot_stocks)} fBuy={len(foreign_buy)} fSell={len(foreign_sell)} "
           f"stocks={len(stocks_raw)} margin={'Y' if margin else 'N'} "
-          f"futDate={fut_date} futRows={len(fut_rows)}")
+          f"futDate={fut_date} futRows={len(fut_rows)} "
+          f"written(market={market_written}, stocks={stocks_written})")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SourceNotReady as e:
+        # 主要來源（如盤後三大法人）當日尚未公布：與日期不一致同樣視為預期情況
+        skip_run(f"來源尚未公布當日資料：{e}")

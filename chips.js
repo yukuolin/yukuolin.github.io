@@ -113,6 +113,11 @@
         if (idxPct > 0) {
             return { label: "偏髒 ⚠️", note: "融資增速超過指數漲幅：散戶追價開槓桿，留意回檔賣壓" };
         }
+        if (idxPct === 0) {
+            return finChg <= 0
+                ? { label: "中性 🙂", note: "指數持平、融資未增加：籌碼面暫無明顯變化" }
+                : { label: "中性偏髒 ⚠️", note: "指數持平、融資增加：散戶槓桿悄悄墊高，留意後續方向" };
+        }
         if (finChg <= 0) {
             return { label: "降溫中 🧹", note: "指數下跌、融資同步退場：槓桿籌碼正在清洗" };
         }
@@ -154,30 +159,32 @@
         for (var i = 0; i < rows.length; i++) {
             if (rows[i].contract === "臺股期貨" && rows[i].item.indexOf("外資") === 0) { fBig = rows[i]; break; }
         }
+        // 期貨資料日期與盤後資料日不同時（例如備援來源尚未更新），卡片標題標出實際日期
+        var futTag = fut.date && fut.date !== dataDate ? "（" + dateLabel(fut.date) + "）" : "";
         if (fBig) {
             cards.push({
-                label: "外資台指期淨未平倉",
+                label: "外資台指期淨未平倉" + futTag,
                 value: signed(fBig.netOI, 0) + " 口",
                 note: (fBig.netOI >= 0 ? "淨多單" : "淨空單") + "／做多 " + fmt(fBig.longOI, 0) + " 口・做空 " + fmt(fBig.shortOI, 0) + " 口",
                 cls: colorClass(fBig.netOI)
             });
             cards.push({
-                label: "外資台指期淨多單（多方未平倉）",
+                label: "外資台指期多方未平倉" + futTag,
                 value: fmt(fBig.longOI, 0) + " 口",
                 note: "外資實際做多的留倉口數",
                 cls: ""
             });
             cards.push({
-                label: "外資台指期淨空單（空方未平倉）",
+                label: "外資台指期空方未平倉" + futTag,
                 value: fmt(fBig.shortOI, 0) + " 口",
                 note: "外資實際做空的留倉口數",
                 cls: ""
             });
             if (fBig.netTrade !== null && fBig.netTrade !== undefined) {
                 cards.push({
-                    label: "外資台指期今日增減",
+                    label: "外資台指期" + (futTag ? "單日增減" + futTag : "今日增減"),
                     value: signed(fBig.netTrade, 0) + " 口",
-                    note: fBig.netTrade > 0 ? "今日轉多／回補空單" : (fBig.netTrade < 0 ? "今日轉空／獲利了結多單" : "今日部位無變化"),
+                    note: fBig.netTrade > 0 ? "當日轉多／回補空單" : (fBig.netTrade < 0 ? "當日轉空／獲利了結多單" : "當日部位無變化"),
                     cls: colorClass(fBig.netTrade)
                 });
             }
@@ -229,8 +236,10 @@
         }).join("");
 
         var futNote = document.getElementById("futNote");
-        if (futNote && fut.date && fut.date !== dataDate) {
-            futNote.textContent = "期貨部位資料日期：" + dateLabel(fut.date) + "（期交所公布時間與證交所不同）。資料來源：臺灣期貨交易所 OpenAPI。";
+        if (futNote && fut.date) {
+            futNote.textContent = "期貨部位資料日期：" + dateLabel(fut.date) +
+                (fut.date !== dataDate ? "（與證交所盤後資料日期不同）" : "") +
+                "。資料來源：" + (fut.source || "臺灣期貨交易所") + "。";
         }
     }
 
@@ -293,6 +302,12 @@
 
         var tbody = document.querySelector("#largeTraderTable tbody");
         if (!tbody) return;
+        var ltNote = document.getElementById("largeTraderNote");
+        if (ltNote) {
+            ltNote.textContent = largeTraders && largeTraders.date
+                ? "資料日期：" + dateLabel(largeTraders.date) + "。資料來源：臺灣期貨交易所 OpenAPI。"
+                : "";
+        }
         if (!largeTraders || !largeTraders.all) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center">尚無大額交易人資料</td></tr>';
             return;

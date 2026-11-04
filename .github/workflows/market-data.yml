@@ -22,9 +22,15 @@ on:
 permissions:
   contents: write
 
+# 排程與手動觸發重疊時排隊執行，避免兩個 job 同時 push 互相衝突
+concurrency:
+  group: market-data
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -39,10 +45,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add data/ sitemap.xml
           if git diff --cached --quiet; then
             echo "No changes."
           else
             git commit -m "chore: 更新每日市場資料"
+            # 執行期間若有人 push 到 main，先 rebase 再推，避免 non-fast-forward 失敗
+            git pull --rebase
             git push
           fi

@@ -1,13 +1,16 @@
-/* 個股查詢頁：讀取 data/stocks.json（每日更新），渲染盤後資訊 + 技術線圖 + 新聞連結 */
+/* 個股查詢頁：讀取 data/stock-index.json 做搜尋，選定個股後再載入 data/stocks/<代號首字>.json
+   （皆每日更新），渲染盤後資訊 + 技術線圖 + 新聞連結 */
 (function () {
     "use strict";
 
-    // stocks.json 每檔欄位順序
+    // 個股分片（data/stocks/*.json）每檔欄位順序；索引檔只有前兩欄（名稱、市場）
     var F = { name: 0, market: 1, close: 2, change: 3, open: 4, high: 5, low: 6,
               volume: 7, trades: 8, value: 9, pe: 10, pb: 11, yield: 12,
               foreign: 13, trust: 14, dealer: 15 };
 
-    var DB = null;          // { date, updatedAt, stocks: {code: [...] } }
+    var DB = null;          // 索引：{ date, updatedAt, stocks: {code: [名稱, 市場]} }
+    var SHARDS = {};        // 代號首字 → 分片載入的 Promise（{ date, stocks: {code: [...完整欄位] } }）
+    var detail = {};        // code → 已載入的完整欄位
     var currentCode = null;
 
     function fmt(n, digits) {
@@ -104,10 +107,37 @@
 
     /* ---------- 渲染 ---------- */
 
+    function loadDetail(code) {
+        var key = code.charAt(0);
+        if (!SHARDS[key]) {
+            SHARDS[key] = fetch("./data/stocks/" + encodeURIComponent(key) + ".json").then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            }).then(function (shard) {
+                for (var c in shard.stocks) detail[c] = shard.stocks[c];
+                return shard;
+            });
+            SHARDS[key].catch(function () { delete SHARDS[key]; });   // 失敗時下次可重試
+        }
+        return SHARDS[key].then(function () { return detail[code]; });
+    }
+
     function render(code) {
-        var s = DB.stocks[code];
-        if (!s) return;
+        if (!DB.stocks[code]) return;
         currentCode = code;
+        document.getElementById("stockSuggest").style.display = "none";
+        document.getElementById("stockStatus").textContent = "資料載入中…";
+        loadDetail(code).then(function (s) {
+            if (currentCode !== code) return;
+            if (!s) throw new Error("no detail");
+            renderDetail(code, s);
+        }).catch(function () {
+            if (currentCode !== code) return;
+            document.getElementById("stockStatus").textContent = "個股資料載入失敗，請稍後再試。";
+        });
+    }
+
+    function renderDetail(code, s) {
         document.getElementById("stockSuggest").style.display = "none";
         document.getElementById("stockInput").value = code + " " + s[F.name];
         document.getElementById("stockIntro").style.display = "none";
@@ -167,12 +197,13 @@
         document.title = s[F.name] + "（" + code + "）盤後資訊、技術線圖與新聞 | 台股個股查詢";
     }
 
-    /* ---------- 技術線圖（Lightweight Charts + Yahoo Finance 日線） ----------
+    /* ---------- 技術線圖（Lightweight Charts + FinMind 日線） ----------
        台股符號不開放 TradingView 內嵌 widget，改用其開源圖表庫自繪。 */
 
     var UP = "#d6414b", DOWN = "#1d9e6f";           // 台股慣例：紅漲綠跌
     var chartRange = "6mo";
     var chartObj = null;
+    var chartToken = 0;     // 每次 renderChart 遞增，用來丟棄過期的回應
 
     function chartMsg(html) {
         var el = document.getElementById("tvChartMsg");
@@ -187,21 +218,55 @@
 
     // range 代碼 → 往回推的月數
     var RANGE_MONTHS = { "3mo": 3, "6mo": 6, "1y": 12, "3y": 36 };
-    var candleCache = {};   // code|range → 資料（技術分析與線圖共用，切換區間不重抓）
+    var candleCache = {};   // code|1y 或 code|3y → 資料 Promise（技術分析與線圖共用，切換區間不重抓）
 
+    // 3 個月／6 個月／1 年都從同一份 1 年日線切出來，只有 3 年另外抓；快取的是 Promise，
+    // 線圖與技術分析同時要資料時也只會打一次 FinMind（匿名呼叫有頻率限制）
     function fetchCandles(code, range) {
-        var key = code + "|" + range;
-        if (candleCache[key]) return Promise.resolve(candleCache[key]);
-        return fetchCandlesRemote(code, range).then(function (data) {
-            candleCache[key] = data;
-            return data;
+        var base = range === "3y" ? "3y" : "1y";
+        var key = code + "|" + base;
+        if (!candleCache[key]) {
+            candleCache[key] = fetchCandlesRemote(code, base).then(function (data) {
+                appendLatestBar(code, data);
+                return data;
+            });
+            candleCache[key].catch(function () { delete candleCache[key]; });   // 失敗時下次可重試
+        }
+        return candleCache[key].then(function (data) {
+            return range === base ? data : sliceCandles(data, rangeStart(range));
+        });
+    }
+
+    function rangeStart(range) {
+        var d = new Date();
+        d.setMonth(d.getMonth() - (RANGE_MONTHS[range] || 6));
+        return d.toISOString().slice(0, 10);
+    }
+
+    function sliceCandles(data, start) {
+        function keep(c) { return c.time >= start; }
+        return { candles: data.candles.filter(keep), volumes: data.volumes.filter(keep) };
+    }
+
+    // FinMind 日線常比 stocks.json 晚更新；最後一根 K 線早於盤後資料日時，
+    // 以 stocks.json 的當日 OHLCV 補上，讓線圖、技術指標與上方盤後卡片一致
+    function appendLatestBar(code, data) {
+        var s = detail[code];
+        if (!s || !DB || !DB.date || DB.date.length !== 8) return;
+        var open = s[F.open], high = s[F.high], low = s[F.low], close = s[F.close];
+        if (!open || !high || !low || !close) return;   // 當日無成交
+        var day = DB.date.slice(0, 4) + "-" + DB.date.slice(4, 6) + "-" + DB.date.slice(6, 8);
+        var last = data.candles[data.candles.length - 1];
+        if (last && last.time >= day) return;
+        data.candles.push({ time: day, open: open, high: high, low: low, close: close });
+        data.volumes.push({
+            time: day, value: s[F.volume] || 0,
+            color: close >= open ? "rgba(214,65,75,0.35)" : "rgba(29,158,111,0.35)"
         });
     }
 
     function fetchCandlesRemote(code, range) {
-        var d = new Date();
-        d.setMonth(d.getMonth() - (RANGE_MONTHS[range] || 6));
-        var start = d.toISOString().slice(0, 10);
+        var start = rangeStart(range);
         // FinMind 開放 API：台股（上市＋上櫃）日線，有開 CORS 可直連
         var url = "https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice" +
             "&data_id=" + encodeURIComponent(code) + "&start_date=" + start;
@@ -248,9 +313,10 @@
         }
         chartMsg('<span class="text-muted">線圖載入中…</span>');
 
-        var myCode = code;
+        // 快速切換股票或區間時，只畫最後一次請求的結果，避免較慢的舊回應蓋掉新圖
+        var myToken = ++chartToken;
         fetchCandles(code, chartRange).then(function (data) {
-            if (currentCode !== myCode) return;
+            if (myToken !== chartToken) return;
             chartMsg("");
             destroyChart();
             var el = document.getElementById("tvChart");
@@ -279,7 +345,7 @@
                 .setData(movingAvg(data.candles, 20));
             chartObj.timeScale().fitContent();
         }).catch(function () {
-            if (currentCode !== myCode) return;
+            if (myToken !== chartToken) return;
             chartMsg('<span>線圖資料暫時無法取得。<a target="_blank" rel="noopener" href="' +
                 esc(link.href) + '">改在 TradingView 查看 →</a></span>');
         });
@@ -512,12 +578,13 @@
             });
             var rows = computeTA(candles);
             var v = taVerdict(rows);
+            var lastDate = data.candles[data.candles.length - 1].time.replace(/-/g, "/");
 
             verdictEl.innerHTML =
                 '<span class="ta-verdict-badge ' + v.cls + '">' + v.label + "</span>" +
                 '<span class="ta-verdict-text">計分指標 ' + v.total + " 項中：" +
                 '<span class="val-up">' + v.bull + " 項偏多</span>、" +
-                '<span class="val-down">' + v.bear + " 項偏空</span>（依最新日線收盤計算）</span>";
+                '<span class="val-down">' + v.bear + " 項偏空</span>（依 " + lastDate + " 日線收盤計算）</span>";
             verdictEl.style.display = "flex";
 
             tbody.innerHTML = rows.map(function (r) {
@@ -558,7 +625,7 @@
         var input = document.getElementById("stockInput");
         var status = document.getElementById("stockStatus");
 
-        fetch("./data/stocks.json").then(function (r) {
+        fetch("./data/stock-index.json").then(function (r) {
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();
         }).then(function (db) {
