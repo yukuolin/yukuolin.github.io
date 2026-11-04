@@ -223,7 +223,8 @@
             var summary = document.getElementById('positionSummary');
             var note = document.getElementById('positionNote');
 
-            var perShareRisk = Math.abs(entry - stop);
+            // 股價最小單位為 0.01，先四捨五入消除浮點誤差（如 10.3 - 10 = 0.30000000000000071）
+            var perShareRisk = Math.round(Math.abs(entry - stop) * 100) / 100;
             if (perShareRisk === 0) {
                 summary.style.display = 'none';
                 note.textContent = '進場價與停損價不能相同，請重新輸入。';

@@ -100,7 +100,9 @@ $(document).ready(function () {
 
     function computeProfit(sellPrice) {
         const sellFee = Math.max(Math.floor(sellPrice * 0.001425 * discount * buyShares), 20);
-        const sellTax = Math.floor(sellPrice * shares * sellTaxRate);
+        // 證交稅在賣出時課徵：做多是平倉賣出價，做空則是進場時先賣出的價格
+        const taxPrice = strategy === 'long' ? sellPrice : buyPrice;
+        const sellTax = Math.floor(taxPrice * shares * sellTaxRate);
         const sellIncome = Math.floor(sellPrice * shares - sellFee - sellTax);
         let profitLoss;
         if (strategy === 'long') {
