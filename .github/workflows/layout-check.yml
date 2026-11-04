@@ -1,0 +1,23 @@
+name: Check shared layout
+
+# 導覽列與頁尾由 scripts/sync_layout.py 統一產生；有人直接改了某一頁的導覽列時提醒同步
+on:
+  push:
+    paths:
+      - "*.html"
+      - "scripts/sync_layout.py"
+  pull_request:
+    paths:
+      - "*.html"
+      - "scripts/sync_layout.py"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/sync_layout.py --check
