@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Node（scripts/game 等工具若安裝套件）
+node_modules/
+
+# 作業系統產生的檔案
+.DS_Store
+Thumbs.db
