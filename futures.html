@@ -243,6 +243,24 @@
                 tmf: { name: '微台', pointValue: 10, defaultFee: 15 }
             };
             var TAX_RATE = 0.00002; // 期交稅：契約金額十萬分之二
+            var STORAGE_KEY = 'futures-calc-inputs';
+            var FIELDS = ['product', 'futuresDirection', 'entryPoint', 'exitPoint', 'lots', 'feePerSide', 'marginPerLot'];
+
+            function saveInputs() {
+                try {
+                    var data = {};
+                    FIELDS.forEach(function (id) { data[id] = document.getElementById(id).value; });
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                } catch (e) { /* 私密瀏覽模式下 localStorage 可能不可用 */ }
+            }
+
+            function loadInputs() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY));
+                } catch (e) {
+                    return null;
+                }
+            }
 
             document.getElementById('product').addEventListener('change', function () {
                 document.getElementById('feePerSide').value = SPECS[this.value].defaultFee;
@@ -279,7 +297,22 @@
                 var summary = document.getElementById('futuresSummary');
                 summary.innerHTML = html;
                 summary.style.display = 'flex';
+                saveInputs();
             });
+
+            // 還原上次輸入（商品要先設定，手續費才不會被商品預設值蓋掉），沒有紀錄時使用預設值
+            var saved = loadInputs();
+            if (saved) {
+                FIELDS.forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (saved[id] === undefined || saved[id] === null) return;
+                    if (el.tagName === 'SELECT' && !el.querySelector('option[value="' + saved[id] + '"]')) return;
+                    el.value = saved[id];
+                });
+                var form = document.getElementById('futuresForm');
+                // 舊紀錄不合法（例如必填欄位空白）時不自動計算，以免一進頁面就跳出驗證提示
+                if (form.checkValidity()) form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
         })();
     </script>
 </body>
