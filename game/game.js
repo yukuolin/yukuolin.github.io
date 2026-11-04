@@ -213,12 +213,14 @@ createApp({
       }
 
       const diff = ret - hold;
+      const TIE = 0.001; // 差距在 0.1% 內視為與買入持有打平（例如第 0 天全買後不動）
       let grade, comment;
       if (!trades.value.length) [grade, comment] = ['—', '你這次完全沒有交易。投資的第一步，就是敢於做出決定！'];
       else if (ret > 0 && diff > 0.2) [grade, comment] = ['S', '股神再世！大幅打敗買入持有。'];
-      else if (ret > 0 && diff >= 0) [grade, comment] = ['A', '有賺錢，還打敗了買入持有，非常好！'];
+      else if (ret > 0 && diff > TIE) [grade, comment] = ['A', '有賺錢，還打敗了買入持有，非常好！'];
+      else if (ret > 0 && diff >= -TIE) [grade, comment] = ['B', '有賺錢，和買入持有差不多，試試看能不能抓到更好的買賣點。'];
       else if (ret > 0) [grade, comment] = ['B', '有賺錢，但其實抱著不動會賺更多。'];
-      else if (diff >= 0) [grade, comment] = ['B', '雖然虧損，但比抱著不動好，成功控制了風險。'];
+      else if (diff > TIE) [grade, comment] = ['B', '雖然虧損，但比抱著不動好，成功控制了風險。'];
       else [grade, comment] = ['C', '這次繳了點學費，看看下面的故事，再挑戰一次吧！'];
 
       const real = (i) => (bars.value[i][3] / s.scale).toFixed(2);
@@ -231,7 +233,8 @@ createApp({
         realEnd: real(cursor.value),
       };
 
-      if (records[s.id] === undefined || ret > records[s.id]) {
+      // 只有走完全程且有交易才列入最佳紀錄，避免開局直接「提前結算」解鎖關卡名稱
+      if (isEnd.value && trades.value.length && (records[s.id] === undefined || ret > records[s.id])) {
         records[s.id] = ret;
         saveRecords(records);
       }
@@ -349,7 +352,10 @@ createApp({
     // 空白鍵 = 下一天
     onMounted(() => {
       window.addEventListener('keydown', (e) => {
-        if (screen.value !== 'play' || e.code !== 'Space' || e.target.tagName === 'INPUT') return;
+        if (screen.value !== 'play' || e.code !== 'Space') return;
+        // 輸入框（如問題回報表單）與開啟中的視窗要保留空白鍵原本的行為
+        if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+        if (showGlossary.value || document.querySelector('.feedback-overlay:not([hidden])')) return;
         e.preventDefault();
         toast.value = null;
         nextDay(1);
