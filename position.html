@@ -235,8 +235,9 @@
                 return;
             }
 
-            var riskBudget = capital * riskPct / 100;      // 這筆交易願意承受的最大虧損
-            var perLotRisk = perShareRisk * 1000;           // 每張（1000 股）的風險金額
+            // 金額先四捨五入到分，避免浮點誤差在剛好整除時少算 1 張（如 30000 × 4.1% = 1229.9999…）
+            var riskBudget = Math.round(capital * riskPct) / 100;   // 這筆交易願意承受的最大虧損
+            var perLotRisk = Math.round(perShareRisk * 100) * 10;   // 每張（1000 股）的風險金額
             var lots = Math.floor(riskBudget / perLotRisk);
             var actualRisk = lots * perLotRisk;
             var positionValue = lots * entry * 1000;

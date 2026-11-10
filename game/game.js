@@ -101,11 +101,12 @@ createApp({
     const avgCost = computed(() => (shares.value ? costBasis.value / shares.value : 0));
     const unrealized = computed(() => shares.value * price.value - costBasis.value);
 
-    // 買入持有：開局日用全部資金買進後不動
-    const holdEquityAt = (i) => {
+    // 買入持有：開局日用全部資金買進後不動；liquidate 為 true 時視為當天全數賣出（扣手續費與證交稅）
+    const holdEquityAt = (i, liquidate = false) => {
       const p0 = bars.value[startIdx.value][3];
       const n = Math.floor(START_CASH / (p0 * (1 + FEE_RATE)));
-      return START_CASH - n * p0 * (1 + FEE_RATE) + n * bars.value[i][3];
+      const value = n * bars.value[i][3];
+      return START_CASH - n * p0 * (1 + FEE_RATE) + (liquidate ? value * (1 - FEE_RATE - TAX_RATE) : value);
     };
     const holdReturn = computed(() => holdEquityAt(cursor.value) / START_CASH - 1);
 
@@ -203,8 +204,11 @@ createApp({
     function finish() {
       stopAuto();
       const s = scenario.value;
-      const ret = returnPct.value;
-      const hold = holdReturn.value;
+      // 結算時雙方都視為以最後收盤價全數賣出，賣出成本一致，比較才公平
+      const liquidationCost = shares.value * price.value * (FEE_RATE + TAX_RATE);
+      const finalEquity = equity.value - liquidationCost;
+      const ret = finalEquity / START_CASH - 1;
+      const hold = holdEquityAt(cursor.value, true) / START_CASH - 1;
 
       let peak = -Infinity, mdd = 0;
       for (const v of equityHistory) {
@@ -225,8 +229,8 @@ createApp({
 
       const real = (i) => (bars.value[i][3] / s.scale).toFixed(2);
       result.value = {
-        ret, hold, mdd, grade, comment,
-        costs: totalCosts.value,
+        ret, hold, mdd, grade, comment, finalEquity,
+        costs: totalCosts.value + liquidationCost,
         startDate: s.dates[startIdx.value],
         endDate: s.dates[cursor.value],
         realStart: real(startIdx.value),

@@ -302,12 +302,12 @@
                 </div>
 
                 <div class="sg-result-grid">
-                    <div class="sg-metric"><div class="sg-muted">你的報酬率</div><div class="sg-big" :class="pnlClass(result.ret)">{{ fmtPct(result.ret) }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">你的報酬率 <span class="sg-tip" title="結算時你與買入持有都視為以最後收盤價全數賣出，已扣手續費與證交稅">?</span></div><div class="sg-big" :class="pnlClass(result.ret)">{{ fmtPct(result.ret) }}</div></div>
                     <div class="sg-metric"><div class="sg-muted">買入持有報酬率</div><div class="sg-big" :class="pnlClass(result.hold)">{{ fmtPct(result.hold) }}</div></div>
                     <div class="sg-metric"><div class="sg-muted">最大回撤 <span class="sg-tip" title="資產從最高點往下跌的最大幅度，代表你承受過的最痛時刻">?</span></div><div class="sg-big">{{ fmtPct(-result.mdd) }}</div></div>
                     <div class="sg-metric"><div class="sg-muted">交易次數</div><div class="sg-big">{{ trades.length }}</div></div>
                     <div class="sg-metric"><div class="sg-muted">手續費＋稅</div><div class="sg-big">{{ fmtMoney(result.costs) }}</div></div>
-                    <div class="sg-metric"><div class="sg-muted">最終資產</div><div class="sg-big">{{ fmtMoney(equity) }}</div></div>
+                    <div class="sg-metric"><div class="sg-muted">最終資產</div><div class="sg-big">{{ fmtMoney(result.finalEquity) }}</div></div>
                 </div>
 
                 <section class="sg-panel">
