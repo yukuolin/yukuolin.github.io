@@ -11,6 +11,8 @@
     var DB = null;          // 索引：{ date, updatedAt, stocks: {code: [名稱, 市場]} }
     var SHARDS = {};        // 代號首字 → 分片載入的 Promise（{ date, stocks: {code: [...完整欄位] } }）
     var detail = {};        // code → 已載入的完整欄位
+    var detailDate = {};    // code → 該檔所屬分片的資料日期（CDN 快取可能讓分片與索引檔日期不同）
+    var valuationDate = {}; // code → 本益比等估值欄位實際所屬日期（估值常比行情晚公布，可能早於 detailDate）
     var currentCode = null;
 
     function fmt(n, digits) {
@@ -114,7 +116,11 @@
                 if (!r.ok) throw new Error("HTTP " + r.status);
                 return r.json();
             }).then(function (shard) {
-                for (var c in shard.stocks) detail[c] = shard.stocks[c];
+                for (var c in shard.stocks) {
+                    detail[c] = shard.stocks[c];
+                    detailDate[c] = shard.date;
+                    valuationDate[c] = (shard.valuationDate || {})[shard.stocks[c][F.market]] || null;
+                }
                 return shard;
             });
             SHARDS[key].catch(function () { delete SHARDS[key]; });   // 失敗時下次可重試
@@ -143,7 +149,7 @@
         document.getElementById("stockIntro").style.display = "none";
         document.getElementById("stockResult").style.display = "block";
         document.getElementById("stockStatus").textContent =
-            "資料日期：" + dateLabel(DB.date) + "（每個交易日收盤後更新）";
+            "資料日期：" + dateLabel(stockDate(code)) + "（每個交易日收盤後更新）";
 
         var isOtc = s[F.market] === "otc";
         document.getElementById("stockTitle").textContent = s[F.name] + "（" + code + "）";
@@ -167,10 +173,14 @@
             card("成交金額", fmt((s[F.value] || 0) / 1e8, 2), "億元") +
             card("成交筆數", fmt(s[F.trades], 0), "筆");
 
+        // 估值尚未更新到當日時沿用前一日數值，並在備註標示實際日期
+        var valDate = valuationDate[code];
+        var valTag = valDate && valDate !== stockDate(code)
+            ? "・" + Number(valDate.slice(4, 6)) + "/" + Number(valDate.slice(6, 8)) + " 資料" : "";
         document.getElementById("stockValuation").innerHTML =
-            card("本益比", s[F.pe] ? fmt(s[F.pe], 2) : "—", "PE") +
-            card("股價淨值比", s[F.pb] ? fmt(s[F.pb], 2) : "—", "PB") +
-            card("殖利率", s[F.yield] ? fmt(s[F.yield], 2) + "%" : "—", "現金股利");
+            card("本益比", s[F.pe] ? fmt(s[F.pe], 2) : "—", "PE" + valTag) +
+            card("股價淨值比", s[F.pb] ? fmt(s[F.pb], 2) : "—", "PB" + valTag) +
+            card("殖利率", s[F.yield] ? fmt(s[F.yield], 2) + "%" : "—", "現金股利" + valTag);
 
         var instEl = document.getElementById("stockInst");
         var noteEl = document.getElementById("stockInstNote");
@@ -250,12 +260,18 @@
 
     // FinMind 日線常比 stocks.json 晚更新；最後一根 K 線早於盤後資料日時，
     // 以 stocks.json 的當日 OHLCV 補上，讓線圖、技術指標與上方盤後卡片一致
+    // 個股數值實際所屬的資料日期：以分片自己的 date 為準，舊分片沒有 date 時才退回索引檔
+    function stockDate(code) {
+        return detailDate[code] || (DB && DB.date);
+    }
+
     function appendLatestBar(code, data) {
         var s = detail[code];
-        if (!s || !DB || !DB.date || DB.date.length !== 8) return;
+        var date = stockDate(code);
+        if (!s || !date || date.length !== 8) return;
         var open = s[F.open], high = s[F.high], low = s[F.low], close = s[F.close];
         if (!open || !high || !low || !close) return;   // 當日無成交
-        var day = DB.date.slice(0, 4) + "-" + DB.date.slice(4, 6) + "-" + DB.date.slice(6, 8);
+        var day = date.slice(0, 4) + "-" + date.slice(4, 6) + "-" + date.slice(6, 8);
         var last = data.candles[data.candles.length - 1];
         if (last && last.time >= day) return;
         data.candles.push({ time: day, open: open, high: high, low: low, close: close });

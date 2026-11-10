@@ -451,14 +451,21 @@ def build_stocks(allbut0999):
 
     # 上市：本益比／股價淨值比／殖利率（BWIBBU_d 同一站台當日更新；ALLBUT0999
     # 內建的本益比欄位對虧損股常誤植為 0.00，改以此表為準，缺值時保留 None）
+    # 估值常比行情晚公布：取來源最新一日的資料，並記下實際日期供前端標註；
+    # 不接受比行情日期還新的資料，避免混入不同交易日
+    valuation_dates = {"tse": None, "otc": None}
     try:
         rows = fetch_json(f"{TWSE_RWD}/afterTrading/BWIBBU_d?response=json&selectType=ALL")
+        val_date = rows.get("date")
+        if not val_date or val_date > date:
+            raise ValueError(f"資料日期 {val_date} 與行情日期 {date} 不符")
         for r in rows["data"]:
             code = r[0].strip()
             if code in stocks:
                 stocks[code][10] = num(r[5])  # 本益比
                 stocks[code][11] = num(r[6])  # 股價淨值比
                 stocks[code][12] = num(r[3])  # 殖利率(%)
+        valuation_dates["tse"] = val_date
     except Exception as e:
         print(f"BWIBBU_d fetch failed: {e}", file=sys.stderr)
 
@@ -481,16 +488,38 @@ def build_stocks(allbut0999):
         ])
     try:
         rows = fetch_json(f"{TPEX_OPENAPI}/tpex_mainboard_peratio_analysis")
+        pe_date = roc_date(rows[0].get("Date")) if rows else None
+        if not pe_date or pe_date > date:
+            raise ValueError(f"資料日期 {pe_date} 與行情日期 {date} 不符")
         for r in rows:
             code = r["SecuritiesCompanyCode"].strip()
             if code in stocks and stocks[code][1] == "otc":
                 stocks[code][10] = num(r["PriceEarningRatio"])
                 stocks[code][11] = num(r["PriceBookRatio"])
                 stocks[code][12] = num(r["YieldRatio"])
+        valuation_dates["otc"] = pe_date
     except Exception as e:
         print(f"TPEX peratio fetch failed: {e}", file=sys.stderr)
 
-    return date, stocks
+    return date, stocks, valuation_dates
+
+
+def load_prev_stocks(date):
+    """讀回既有個股分片；只在資料日期與本次相同時才回傳，供失敗的欄位沿用。
+
+    回傳 (stocks, valuationDate)；舊格式分片沒有 valuationDate 時該市場日期為 None。
+    """
+    shard_dir = DATA_DIR / "stocks"
+    prev, prev_dates = {}, {}
+    for path in shard_dir.glob("*.json"):
+        try:
+            shard = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if shard.get("date") == date:
+            prev.update(shard.get("stocks") or {})
+            prev_dates.update(shard.get("valuationDate") or {})
+    return prev, prev_dates
 
 
 def get_fx(history):
@@ -552,11 +581,12 @@ def update_sitemap_lastmod(date):
         f.write(xml)
 
 
-def write_stock_files(date, updated_at, stocks):
+def write_stock_files(date, updated_at, stocks, valuation_dates):
     """個股資料拆成輕量索引 + 依代號首字分片，個股查詢頁不必每次下載全部 2000 多檔明細。
 
     - stock-index.json：{date, updatedAt, stocks: {代號: [名稱, 市場]}}，供搜尋自動完成
-    - stocks/<代號首字>.json：{date, stocks: {代號: 完整欄位}}，欄位格式同 build_stocks()
+    - stocks/<代號首字>.json：{date, valuationDate: {tse, otc}, stocks: {代號: 完整欄位}}，
+      欄位格式同 build_stocks()；valuationDate 為本益比等估值欄位實際所屬日期（可能早於 date）
     回傳有被重寫的檔案數。
     """
     written = 0
@@ -570,7 +600,9 @@ def write_stock_files(date, updated_at, stocks):
     for code, row in stocks.items():
         shards.setdefault(code[0], {})[code] = row
     for key, rows in shards.items():
-        written += write_if_changed(shard_dir / f"{key}.json", {"date": date, "stocks": rows})
+        written += write_if_changed(
+            shard_dir / f"{key}.json", {"date": date, "valuationDate": valuation_dates, "stocks": rows}
+        )
     # 已不再有任何代號開頭的舊分片要移除，避免前端讀到過期資料
     for path in shard_dir.glob("*.json"):
         if path.stem not in shards:
@@ -597,7 +629,21 @@ def main():
     foreign_buy, foreign_sell, trust_buy, inst_map = get_t86(stocks_date)
 
     # 個股行情（含上市/上櫃）
-    stocks_date, stocks_raw = build_stocks(allbut0999)
+    stocks_date, stocks_raw, valuation_dates = build_stocks(allbut0999)
+    # 本次估值失敗或日期較舊時，若同一資料日先前已寫出較新的估值就沿用，避免整批被清成 None 或倒退
+    if any(d != stocks_date for d in valuation_dates.values()):
+        prev_stocks, prev_dates = load_prev_stocks(stocks_date)
+        for m, cur in valuation_dates.items():
+            prev_d = prev_dates.get(m)
+            if cur is not None and (prev_d is None or prev_d <= cur):
+                continue
+            if not any(r[1] == m for r in prev_stocks.values()):
+                continue
+            for code, row in stocks_raw.items():
+                old = prev_stocks.get(code)
+                if row[1] == m and old and len(old) > 12:
+                    row[10], row[11], row[12] = old[10], old[11], old[12]
+            valuation_dates[m] = prev_d
 
     # 同一資料日已有完整資料時，本次失敗的籌碼區塊沿用舊值，避免被 None 蓋掉
     market_path = DATA_DIR / "market.json"
@@ -620,7 +666,8 @@ def main():
     except Exception as e:
         print(f"Futures positions fetch failed (TAIFEX + FinMind fallback): {e}", file=sys.stderr)
     prev_fut = prev_chips.get("futures") or {}
-    if not fut_rows and prev_fut.get("rows"):
+    # 本次失敗，或備援來源仍停在較舊日期時，沿用同一資料日已存的較新資料
+    if prev_fut.get("rows") and (not fut_rows or (fut_date or "") < (prev_fut.get("date") or "")):
         fut_date, fut_rows, fut_source = prev_fut.get("date"), prev_fut["rows"], prev_fut.get("source")
 
     # 盤後籌碼分析新增指標：任一失敗都不應讓主要資料跳過
@@ -663,6 +710,9 @@ def main():
              if fut_date == stocks_date and r["contract"] == "臺股期貨" and r["item"].startswith("外資")),
             None,
         )
+        if f_net is None:
+            # 本次取不到當日外資大台資料時，保留同一天先前已記錄的值
+            f_net = next((h.get("fNet") for h in chip_history if h["date"] == stocks_date), None)
         chip_history = [h for h in chip_history if h["date"] != stocks_date]
         chip_history.append({
             "date": stocks_date,
@@ -722,7 +772,7 @@ def main():
             json.dumps(chip_history, ensure_ascii=False, indent=1), encoding="utf-8"
         )
 
-    stocks_written = write_stock_files(stocks_date, market["updatedAt"], stocks_raw)
+    stocks_written = write_stock_files(stocks_date, market["updatedAt"], stocks_raw, valuation_dates)
 
     print(f"OK dataDate={market['dataDate']} sectors={len(sectors)} "
           f"hot={len(hot_stocks)} fBuy={len(foreign_buy)} fSell={len(foreign_sell)} "
