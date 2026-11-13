@@ -523,14 +523,25 @@ def load_prev_stocks(date):
 
 
 def get_fx(history):
-    """USD 基準匯率 → 各幣別對台幣，附上一筆歷史供比較。"""
+    """USD 基準匯率 → 各幣別對台幣，附上一筆歷史供比較。
+
+    來源每日只更新一次（約 UTC 00:00）；以來源的更新時間戳記判斷是否有新資料，
+    沒更新就原樣沿用最後一筆，避免每次排程都因匯率檔變動而產生 commit，
+    也避免跨日後把同一份報價重複記成新的一天。
+    """
     d = fetch_json("https://open.er-api.com/v6/latest/USD")
     if d.get("result") != "success":
-        return history, None
+        return history, (history[-1] if history else None)
+    src_updated = d.get("time_last_update_unix")
+    if history and src_updated and history[-1].get("srcUpdated") == src_updated:
+        return history, history[-1]
     r = d["rates"]
     twd = r["TWD"]
+    # 日期以來源更新時間（換算台北時間）為準；來源沒給時間戳記才退回現在時間
+    as_of = datetime.fromtimestamp(src_updated, TAIPEI) if src_updated else datetime.now(TAIPEI)
     today = {
-        "date": datetime.now(TAIPEI).strftime("%Y-%m-%d"),
+        "date": as_of.strftime("%Y-%m-%d"),
+        "srcUpdated": src_updated,
         "USDTWD": round(twd, 4),
         "JPYTWD": round(twd / r["JPY"], 4),
         "EURTWD": round(twd / r["EUR"], 4),
