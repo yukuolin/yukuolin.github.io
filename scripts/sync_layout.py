@@ -30,6 +30,7 @@ PAGES = {
     "freshmen.html": "freshmen",
     "risk.html": "risk",
     "caculation.html": "caculation",
+    "privacy.html": None,  # 不在導覽列中，只由頁尾連結
 }
 
 # 一般連結：(key, href, 文字)；下拉選單：(key, href, 文字, 下拉設定)
@@ -87,6 +88,7 @@ NAV_ITEMS = [
 FOOTER = """    <footer class="footer">
         <p>Design by <a href="#">Yukuo Lin</a> Copyright© YukuoLin All Rights Reserved.</p>
         <p>免責聲明：本網站僅供試算用，實際成本及損益應以政府、券商公告之價格為準，本網站不構成任何投資建議</p>
+        <p><a href="./privacy.html">隱私權政策</a></p>
     </footer>"""
 
 
